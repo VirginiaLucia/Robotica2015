@@ -51,7 +51,7 @@ void SpecificWorker::compute()
   float rot = 0.9;  //rads per second
   const int offset = 5;
   int v;
-  static float B=(M_PI/4*M_PI/4)/log(0.3);
+  static float B=-(M_PI/4*M_PI/4)/log(0.3);
   static float C=1/log(0.5);
     try
     {
@@ -60,9 +60,10 @@ void SpecificWorker::compute()
 	
 	float angle=(ldata.data()+offset)->angle;
 	float dist=(ldata.data()+offset)->dist/1000.f;
+	
 	v=0.5*(ldata.data()+offset)->dist;
-	if(v>500)
-	  v=500;
+	if(v>500)  v=500;
+	
 	rot=exp(-(angle*angle)/B)/dist;
 	differentialrobot_proxy->setSpeedBase(v, rot);
 	qDebug()<<v<<rot;
