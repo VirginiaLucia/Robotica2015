@@ -41,13 +41,53 @@ public:
 	SpecificWorker(MapPrx& mprx);	
 	~SpecificWorker();
 	bool setParams(RoboCompCommonBehavior::ParameterList params);
+	void newAprilTag(const tagsList &tags);
 
 
 public slots:
-	void compute(); 	
+	void compute();
+	void navegate();
 
 private:
+  
+  struct ListaMarcas
+  {
+      typedef struct
+      {
+	int id;
+	float tx;
+	float ty;
+	float tz;
+	float rx;
+	float ry;
+	float rz;
+      } Marca;
+      
+      QMap<int,Marca> lista;
+      QMutex mutex;
+      void add(const RoboCompAprilTags::tag &t)
+      {
+	Marca marca;
+	marca.id = t.id;
+	marca.rx = t.rx;
+	marca.ry = t.ry;
+	marca.rz = t.rz;
+	marca.tx = t.tx;
+	marca.ty = t.ty;
+	marca.tz = t.tz;
+	lista.insert(t.id, marca);
+      };
+      const Marca get(int id)
+      {
+	return lista.value(id);
+      };
+      
+  };
 	
+  ListaMarcas listaMarcas;
+  
+  enum class State  { INIT, MARCA0, NAVEGATE};
+  State estado = State::INIT;
 };
 
 #endif

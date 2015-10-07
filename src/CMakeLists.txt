@@ -26,6 +26,7 @@ SET ( SOURCES
   commonbehaviorI.cpp
   genericworker.cpp
   specificworker.cpp
+  apriltagsI.cpp
 )
 
 # Headers set
@@ -36,10 +37,11 @@ SET ( HEADERS
   commonbehaviorI.h
   genericworker.h
   specificworker.h
+  apriltagsI.h
 )
 #ROBOCOMP
 ROBOCOMP_INITIALIZE( $ENV{ROBOCOMP}/ )
-ROBOCOMP_WRAP_ICE( CommonBehavior DifferentialRobot Laser DifferentialRobot )
+ROBOCOMP_WRAP_ICE( CommonBehavior DifferentialRobot Laser DifferentialRobot AprilTags )
 SET (EXECUTABLE_OUTPUT_PATH ${RC_COMPONENT_DEVEL_PATH}/bin)
 
 # Qt4

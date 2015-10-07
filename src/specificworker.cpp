@@ -37,9 +37,6 @@ SpecificWorker::~SpecificWorker()
 bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 {
 
-
-
-	
 	timer.start(Period);
 
 	return true;
@@ -47,12 +44,26 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 
 void SpecificWorker::compute()
 {
-  const float threshold = 450; //millimeters
-  float rot = 0.9;  //rads per second
-  const int offset = 5;
-  int v;
-  static float B=-(M_PI/4*M_PI/4)/log(0.3);
-  static float C=1/log(0.5);
+    navegate();
+    
+    switch( estado )
+    {
+      case State::INIT:
+	//ellamar al metodo y en el cambiar el estado
+	break;
+      case State::NAVEGATE:
+	  navegate();
+	break;
+    } 
+}
+
+void SpecificWorker::navegate(){
+    float rot = 0.9;  //rads per second
+    const int offset = 5;
+    int v;
+    static float B=-(M_PI/4*M_PI/4)/log(0.3);
+    bool giro=false;
+  
     try
     {
         RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();  //read laser data 
@@ -61,59 +72,46 @@ void SpecificWorker::compute()
 	float angle=(ldata.data()+offset)->angle;
 	float dist=(ldata.data()+offset)->dist/1000.f;
 	
+	if(angle>0) 
+	  giro=false;
+	else 
+	  giro=true;
+	
 	v=0.5*(ldata.data()+offset)->dist;
 	if(v>500)  v=500;
 	
 	rot=exp(-(angle*angle)/B)/dist;
-	differentialrobot_proxy->setSpeedBase(v, rot);
-	qDebug()<<v<<rot;
+	
+	if(giro) 
+	  differentialrobot_proxy->setSpeedBase(v, rot);
+	else 
+	  differentialrobot_proxy->setSpeedBase(v, -rot);
+	usleep(rand()%(1500000-100000 + 1) + 100000);
+	//qDebug()<<v<<rot;
+    
+        //if listaMarcas.get(0)
+	 //   state = State::
+	
     }
     catch(const Ice::Exception &ex)
     {
         std::cout << ex << std::endl;
     }
 }
-// void SpecificWorker::compute()
-// {
-//  const float threshold = 450; //millimeters
-//     float rot = 0.9;  //rads per second
-//  const int offset = 20;
-//   int v;
-// 
-//     try
-//     {
-//         RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();  //read laser data 
-//         std::sort( ldata.begin()+offset, ldata.end()-offset, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;  //sort laser data from small to large distances using a lambda function.
-// 
-// 	if( (ldata.data()+offset)->dist < threshold)
-// 	{
-// 	  
-// 	  if((ldata.data()+offset)->angle < 0)
-// 	    {
-// 	      differentialrobot_proxy->setSpeedBase(5, rot);
-// 	      usleep(rand()%(1500000-100000 + 1) + 100000);  //random wait between 1.5s and 0.1sec
-// 	    }
-// 	    else
-// 	    {
-// 	      differentialrobot_proxy->setSpeedBase(5, -rot);
-// 	      usleep(rand()%(1500000-100000 + 1) + 100000);
-// 	    }
-// 	}
-// 	else
-// 	{
-// 	  v=0.5*(ldata.data()+offset)->dist;
-// 	  differentialrobot_proxy->setSpeedBase(v, 0);   
-// 	}
-//     }
-//     catch(const Ice::Exception &ex)
-//     {
-//         std::cout << ex << std::endl;
-//     }
-// }
 
 
 
+////////////////////////////77
+/// ICE
+/////////////////////////////7
 
-
-
-
+void SpecificWorker::newAprilTag(const tagsList& tags)
+{
+  
+   for( auto t: tags)
+   {
+     listaMarcas.add(t);
+     qDebug() << t.id;
+    } 
+}
+ 

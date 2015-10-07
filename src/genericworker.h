@@ -29,6 +29,7 @@
 #include <CommonBehavior.h>
 #include <Laser.h>
 #include <DifferentialRobot.h>
+#include <AprilTags.h>
 
 
 
@@ -41,6 +42,7 @@ using namespace std;
 
 using namespace RoboCompLaser;
 using namespace RoboCompDifferentialRobot;
+using namespace RoboCompAprilTags;
 
 
 
@@ -66,6 +68,7 @@ public:
 	DifferentialRobotPrx differentialrobot_proxy;
 	LaserPrx laser_proxy;
 
+	virtual void newAprilTag(const tagsList &tags) = 0;
 
 
 protected:
