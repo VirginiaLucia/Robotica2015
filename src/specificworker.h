@@ -33,6 +33,7 @@
 
 #include <genericworker.h>
 #include <innermodel/innermodel.h>
+#include <math.h>
 
 class SpecificWorker : public GenericWorker
 {
@@ -47,6 +48,7 @@ public:
 public slots:
 	void compute();
 	void navegate();
+	void searchMark(int initMark);
 
 private:
   
@@ -61,12 +63,16 @@ private:
 	float rx;
 	float ry;
 	float rz;
+	QTime reloj;
       } Marca;
       
       QMap<int,Marca> lista;
       QMutex mutex;
+      
       void add(const RoboCompAprilTags::tag &t)
       {
+	QMutexLocker ml(&mutex);
+	
 	Marca marca;
 	marca.id = t.id;
 	marca.rx = t.rx;
@@ -75,19 +81,41 @@ private:
 	marca.tx = t.tx;
 	marca.ty = t.ty;
 	marca.tz = t.tz;
+	marca.reloj=QTime::currentTime();
 	lista.insert(t.id, marca);
       };
-      const Marca get(int id)
+      Marca get(int id)
       {
+	QMutexLocker ml(&mutex);
+	//borraMarca(id);
 	return lista.value(id);
       };
-      
+      bool exists(int id)
+      {
+	QMutexLocker ml(&mutex);
+	borraMarca(id);
+	return lista.contains(id);
+      };
+      float distance(int initMark)
+      {
+	Marca m = get(initMark);
+	QMutexLocker ml(&mutex);
+	float d = sqrt(pow(m.tx,2) + pow(m.tz,2));
+	qDebug()<<"Dist"<<d;
+	return d;
+      };
+      void borraMarca(int id)
+      {
+	if(lista.value(id).reloj.elapsed()>300)
+	  lista.remove(id);
+      };
   };
 	
   ListaMarcas listaMarcas;
   
-  enum class State  { INIT, MARCA0, NAVEGATE};
+  enum class State  { INIT, SEARCH, NAVEGATE, FINISH};
   State estado = State::INIT;
+  int initMark = 0;
 };
 
 #endif

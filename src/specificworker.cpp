@@ -43,18 +43,62 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 }
 
 void SpecificWorker::compute()
-{
-    navegate();
-    
+{   
+  std::cout << "compute" << std::endl;
     switch( estado )
     {
       case State::INIT:
-	//ellamar al metodo y en el cambiar el estado
+	std::cout << "INIT" << std::endl;
+	estado = State::SEARCH;
+	break;
+      case State::SEARCH:
+	std::cout << "SEARCH" << std::endl;
+	searchMark(initMark);
 	break;
       case State::NAVEGATE:
+	std::cout << "NAVEGATE" << std::endl;
+	//mirar que la distancia sea menor a 300, si es menos buscamos de nuevo.
 	  navegate();
 	break;
+      case State::FINISH:
+	std::cout << "FINISH" << std::endl;
+	break;
     } 
+}
+void SpecificWorker::searchMark(int initMark)
+{
+  static bool firstTime=true;
+  if(listaMarcas.exists(initMark))
+  {
+    std::cout << "Existe la marca" << std::endl;
+    try
+    {
+      //parar el robot
+      differentialrobot_proxy->setSpeedBase(0,0);
+    }
+    catch(const Ice::Exception e){
+      std::cout << e << std::endl;
+    }
+    //cambiar al estado navegate
+    estado = State::NAVEGATE;
+    firstTime=true;
+    return;
+  }
+  
+ if(firstTime)
+  {
+    std::cout << "firstTime" << std::endl;
+    try
+    {
+      //girar el robot
+      differentialrobot_proxy->setSpeedBase(0,0.5);
+    }
+    catch(const Ice::Exception e){
+      std::cout << e << std::endl;
+    }
+    firstTime=false;
+  }
+
 }
 
 void SpecificWorker::navegate(){
@@ -64,8 +108,34 @@ void SpecificWorker::navegate(){
     static float B=-(M_PI/4*M_PI/4)/log(0.3);
     bool giro=false;
   
+    
+    if(listaMarcas.exists(initMark))
+    {
+      std::cout << "Nav existe la marca::" << initMark << std::endl;
+      if(listaMarcas.distance(initMark)<0.8)
+      {
+	std::cout << "Nav dist < 300" << std::endl;
+	//parar robot
+	differentialrobot_proxy->setSpeedBase(0,0);
+	estado = State::SEARCH;
+	initMark = (initMark + 1) % 4;
+	return;
+      }
+      std::cout << "Dentro if" << std::endl;
+    }
+    else
+    {
+      //std::cout << "Nav vuelve a search" << std::endl;
+      estado = State::SEARCH;
+      return;
+    }
+    
+   // std::cout << "Navega1" << std::endl;
+
     try
     {
+        std::cout << "Navega2" << std::endl;
+	
         RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();  //read laser data 
         std::sort( ldata.begin()+offset, ldata.end()-offset, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;  //sort laser data from small to large distances using a lambda function.
 	
