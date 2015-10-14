@@ -49,6 +49,7 @@ public slots:
 	void compute();
 	void navegate();
 	void searchMark(int initMark);
+	void wait();
 
 private:
   
@@ -100,6 +101,7 @@ private:
       {
 	Marca m = get(initMark);
 	QMutexLocker ml(&mutex);
+	borraMarca(initMark);
 	float d = sqrt(pow(m.tx,2) + pow(m.tz,2));
 	qDebug()<<"Dist"<<d;
 	return d;
@@ -113,7 +115,7 @@ private:
 	
   ListaMarcas listaMarcas;
   
-  enum class State  { INIT, SEARCH, NAVEGATE, FINISH};
+  enum class State  { INIT, SEARCH, NAVEGATE, WAIT, FINISH};
   State estado = State::INIT;
   int initMark = 0;
 };

@@ -57,8 +57,11 @@ void SpecificWorker::compute()
 	break;
       case State::NAVEGATE:
 	std::cout << "NAVEGATE" << std::endl;
-	//mirar que la distancia sea menor a 300, si es menos buscamos de nuevo.
 	  navegate();
+	break;
+      case State::WAIT:
+	std::cout << "WAIT" << std::endl;
+	  wait();
 	break;
       case State::FINISH:
 	std::cout << "FINISH" << std::endl;
@@ -101,23 +104,39 @@ void SpecificWorker::searchMark(int initMark)
 
 }
 
-void SpecificWorker::navegate(){
+void SpecificWorker::wait()
+{
+  static bool primeraVez=true;
+  static QTime reloj;
+  if(primeraVez){
+    reloj = QTime::currentTime();
+    primeraVez=false;
+  }
+  if(reloj.elapsed() > 10000){
+    estado = State::SEARCH;
+    primeraVez=true;
+    return;
+  } 
+}
+void SpecificWorker::navegate()
+{
     float rot = 0.9;  //rads per second
-    const int offset = 5;
+    const int offset = 20;
     int v;
     static float B=-(M_PI/4*M_PI/4)/log(0.3);
     bool giro=false;
   
-    
+    //mirar que la distancia sea menor a 300, si es menos buscamos de nuevo.
     if(listaMarcas.exists(initMark))
     {
       std::cout << "Nav existe la marca::" << initMark << std::endl;
       if(listaMarcas.distance(initMark)<0.8)
-      {
-	std::cout << "Nav dist < 300" << std::endl;
-	//parar robot
+      {	//parar robot
 	differentialrobot_proxy->setSpeedBase(0,0);
-	estado = State::SEARCH;
+	//ESPERAR UN TIEMPO
+	std::cout << "Parado en la marca" << std::endl;
+	//sleep(3);
+	estado = State::WAIT;
 	initMark = (initMark + 1) % 4;
 	return;
       }
@@ -125,12 +144,10 @@ void SpecificWorker::navegate(){
     }
     else
     {
-      //std::cout << "Nav vuelve a search" << std::endl;
       estado = State::SEARCH;
       return;
     }
     
-   // std::cout << "Navega1" << std::endl;
 
     try
     {
@@ -156,11 +173,7 @@ void SpecificWorker::navegate(){
 	  differentialrobot_proxy->setSpeedBase(v, rot);
 	else 
 	  differentialrobot_proxy->setSpeedBase(v, -rot);
-	usleep(rand()%(1500000-100000 + 1) + 100000);
-	//qDebug()<<v<<rot;
-    
-        //if listaMarcas.get(0)
-	 //   state = State::
+	usleep(rand()%(1500000-100000 + 1) + 100000);   
 	
     }
     catch(const Ice::Exception &ex)
