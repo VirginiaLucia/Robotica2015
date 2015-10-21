@@ -53,8 +53,11 @@ public slots:
 
 private:
   
+
+
   struct ListaMarcas
   {
+      ListaMarcas(InnerModel *inner_) : inner(inner_){};
       typedef struct
       {
 	int id;
@@ -69,6 +72,8 @@ private:
       
       QMap<int,Marca> lista;
       QMutex mutex;
+      QVec memory;
+      InnerModel *inner;
       
       void add(const RoboCompAprilTags::tag &t)
       {
@@ -79,17 +84,32 @@ private:
 	marca.rx = t.rx;
 	marca.ry = t.ry;
 	marca.rz = t.rz;
-	marca.tx = t.tx;
-	marca.ty = t.ty;
-	marca.tz = t.tz;
+	marca.tx = t.tx * 1000;
+	marca.ty = t.ty * 1000;
+	marca.tz = t.tz * 1000;
 	marca.reloj=QTime::currentTime();
+	
 	lista.insert(t.id, marca);
+	memory = inner->transform("world", QVec::vec3(t.tx, 0, t.tz),"rgbd");	//destino, coordenadas de la marca tag(t.x, t.z) ,origen
       };
       Marca get(int id)
       {
 	QMutexLocker ml(&mutex);
 	//borraMarca(id);
-	return lista.value(id);
+	if(lista.contains(id)){
+	  return lista.value(id);
+	}
+	else{
+	  //RECUPERAR 
+	  QVec reality = inner->transform("rgbd", memory ,"world");
+	  Marca m;
+	  m.id=id;
+	  m.tx=reality.x();
+	  m.ty=reality.y();
+	  m.tz=reality.z();
+	  return m;
+	}
+	
       };
       bool exists(int id)
       {
@@ -113,11 +133,18 @@ private:
       };
   };
 	
-  ListaMarcas listaMarcas;
+  ListaMarcas* listaMarcas;
   
-  enum class State  { INIT, SEARCH, NAVEGATE, WAIT, FINISH};
+  enum class State  { INIT, SEARCH, NAVEGATE, WAIT, FINISH, WALL};
   State estado = State::INIT;
   int initMark = 0;
+  TLaserData ldata;
+  
+  InnerModel* inner;
+    void wall();
+
+  
+  
 };
 
 #endif
