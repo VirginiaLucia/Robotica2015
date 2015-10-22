@@ -57,7 +57,10 @@ private:
 
   struct ListaMarcas
   {
-      ListaMarcas(InnerModel *inner_) : inner(inner_){};
+      ListaMarcas(InnerModel *inner_) : inner(inner_){
+	inMemory=false;
+	initMark=0;
+      };
       typedef struct
       {
 	int id;
@@ -74,6 +77,8 @@ private:
       QMutex mutex;
       QVec memory;
       InnerModel *inner;
+      bool inMemory;
+      int initMark;
       
       void add(const RoboCompAprilTags::tag &t)
       {
@@ -90,7 +95,11 @@ private:
 	marca.reloj=QTime::currentTime();
 	
 	lista.insert(t.id, marca);
-	memory = inner->transform("world", QVec::vec3(t.tx, 0, t.tz),"rgbd");	//destino, coordenadas de la marca tag(t.x, t.z) ,origen
+	if(initMark==marca.id)
+	{
+	  memory = inner->transform("world", QVec::vec3(t.tx, 0, t.tz),"rgbd");	//destino, coordenadas de la marca tag(t.x, t.z) ,origen
+	  inMemory=true;
+	}
       };
       Marca get(int id)
       {
@@ -115,7 +124,7 @@ private:
       {
 	QMutexLocker ml(&mutex);
 	borraMarca(id);
-	return lista.contains(id);
+	return lista.contains(id) or inMemory;
       };
       float distance(int initMark)
       {
@@ -123,7 +132,7 @@ private:
 	QMutexLocker ml(&mutex);
 	borraMarca(initMark);
 	float d = sqrt(pow(m.tx,2) + pow(m.tz,2));
-	qDebug()<<"Dist"<<d;
+	qDebug()<<"distancia"<<d;
 	return d;
       };
       void borraMarca(int id)
@@ -137,7 +146,6 @@ private:
   
   enum class State  { INIT, SEARCH, NAVEGATE, WAIT, FINISH, WALL};
   State estado = State::INIT;
-  int initMark = 0;
   TLaserData ldata;
   
   InnerModel* inner;

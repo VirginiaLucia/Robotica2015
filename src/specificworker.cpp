@@ -38,7 +38,7 @@ SpecificWorker::~SpecificWorker()
 bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 {
 
-	timer.start(Period);
+	timer.start(500);
 
 	return true;
 }
@@ -51,9 +51,6 @@ void SpecificWorker::compute()
   
   ldata = laser_proxy->getLaserData();  //read laser data 
 
-
-
-  std::cout << "compute" << std::endl;
     switch( estado )
     {
       case State::INIT:
@@ -62,7 +59,7 @@ void SpecificWorker::compute()
 	break;
       case State::SEARCH:
 	std::cout << "SEARCH" << std::endl;
-	searchMark(initMark);
+	searchMark(listaMarcas->initMark);
 	break;
       case State::NAVEGATE:
 	std::cout << "NAVEGATE" << std::endl;
@@ -104,7 +101,6 @@ void SpecificWorker::searchMark(int initMark)
   
  if(firstTime)
   {
-    std::cout << "firstTime" << std::endl;
     try
     {
       //girar el robot
@@ -125,8 +121,9 @@ void SpecificWorker::wait()
   if(primeraVez){
     reloj = QTime::currentTime();
     primeraVez=false;
+    listaMarcas->inMemory=false;
   }
-  if(reloj.elapsed() > 10000){
+  if(reloj.elapsed() > 5000){
     estado = State::SEARCH;
     primeraVez=true;
     return;
@@ -135,29 +132,26 @@ void SpecificWorker::wait()
 
 void SpecificWorker::navegate()
 {
-    float rot = 0.9;  //rads per second
+    //float rot = 0.9;  //rads per second
     const int offset = 20;
-    int v;
-    static float B=-(M_PI/4*M_PI/4)/log(0.3);
+    //int v;
+    //static float B=-(M_PI/4*M_PI/4)/log(0.3);
     bool giro=false;
   
-    float distance= listaMarcas->distance(initMark);
+    float distance= listaMarcas->distance(listaMarcas->initMark);
     
     //mirar que la distancia sea menor a 300, si es menos buscamos de nuevo.
-    if(listaMarcas->exists(initMark))
+    if(listaMarcas->exists(listaMarcas->initMark))
     {
-      std::cout << "Nav existe la marca::" << initMark << std::endl;
-      if(distance<800)
+      std::cout << "Nav existe la marca::" << listaMarcas->initMark << std::endl;
+      if(distance<400)
       {	//parar robot
 	differentialrobot_proxy->setSpeedBase(0,0);
 	//ESPERAR UN TIEMPO
-	std::cout << "Parado en la marca" << std::endl;
-	//sleep(3);
 	estado = State::WAIT;
-	initMark = (initMark + 1) % 4;
+	listaMarcas->initMark = (listaMarcas->initMark + 1) % 4;
 	return;
       }
-      std::cout << "Dentro if" << std::endl;
     }
     else
     {
@@ -167,9 +161,7 @@ void SpecificWorker::navegate()
     
 
     try
-    {
-        std::cout << "Navega2" << std::endl;
-		
+    {		
         std::sort( ldata.begin()+offset, ldata.end()-offset, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;  //sort laser data from small to large distances using a lambda function.
 	
 	float angle=(ldata.data()+offset)->angle;
@@ -178,8 +170,8 @@ void SpecificWorker::navegate()
 	//si encuentra un obstaculo
 	if(dist<400)
 	{
-	    differentialrobot_proxy->setSpeedBase(300, ); //derecha
-	    usleep(500000);
+	    differentialrobot_proxy->setSpeedBase(100, 0.5); //derecha
+	    sleep(3);
 	    estado = State::WALL;
 	    return;
 	}
@@ -202,8 +194,8 @@ void SpecificWorker::navegate()
 	  
 //	}
 	else{
-	  float tx= listaMarcas->get(initMark).tx;
-	  float tz= listaMarcas->get(initMark).tz;
+	  float tx= listaMarcas->get(listaMarcas->initMark).tx;
+	  float tz= listaMarcas->get(listaMarcas->initMark).tz;
 	  float r= atan2(tx, tz);
 	  differentialrobot_proxy->setSpeedBase(300, r);
 	}
@@ -218,27 +210,31 @@ void SpecificWorker::navegate()
 
 void SpecificWorker::wall()
 {
+  std::cout << "WALL" << std::endl;
     RoboCompLaser::TLaserData ldataCopy = ldata;
     int l = ldataCopy.size();
   
     std::sort( ldataCopy.begin()+l/2, ldataCopy.end()-5, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;
-	  
-    if((ldataCopy.data() + l/2 )->dist < 200) {
+    
+    if((ldataCopy.data() + l/2 )->dist > 400)
+    {
+      estado = State::NAVEGATE;
+      return;
+    }
+
+    if((ldataCopy.data() + l/2 )->dist < 200)
+    {
       differentialrobot_proxy->setSpeedBase(300, 0.5); //derecha
     }
-    else{
+    else
+    {
       differentialrobot_proxy->setSpeedBase(300, -0.5); //izquierda
-    } 
-    
-    
-    estado = State::NAVEGATE;
-    return;
-  
+    }
 }
 
 
 ////////////////////////////77
-/// ICE
+/// ICEPeriod
 /////////////////////////////7
 
 void SpecificWorker::newAprilTag(const tagsList& tags)
@@ -247,7 +243,7 @@ void SpecificWorker::newAprilTag(const tagsList& tags)
    for( auto t: tags)
    {
      listaMarcas->add(t);
-     qDebug() << t.id;
+     qDebug() << t.id << " x: "<< t.tx << " z: " << t.tz;
     } 
 }
  
