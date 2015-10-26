@@ -50,6 +50,7 @@ public slots:
 	void navegate();
 	void searchMark(int initMark);
 	void wait();
+	void wall();
 
 private:
   
@@ -61,6 +62,7 @@ private:
 	inMemory=false;
 	initMark=0;
       };
+      
       typedef struct
       {
 	int id;
@@ -95,22 +97,24 @@ private:
 	marca.reloj=QTime::currentTime();
 	
 	lista.insert(marca.id, marca);
+	
 	if(initMark==marca.id)
 	{
-	  memory = inner->transform("world", QVec::vec3(marca.tx, 0, marca.tz),"rgbd");	//destino, coordenadas de la marca tag(t.x, t.z) ,origen
+	  memory = inner->transform("world", QVec::vec3(marca.tx, 0, marca.tz),"rgbd");
 	  inMemory=true;
-
 	}
       };
+      
       Marca get(int id)
       {
 	QMutexLocker ml(&mutex);
-	//borraMarca(id);
-	if(lista.contains(id)){
+	if(lista.contains(id))
+	{
 	  return lista.value(id);
 	}
-	else{
-	  //RECUPERAR 
+	else
+	{
+	  //RECUPERAR memoria
 	  QVec reality = inner->transform("rgbd", memory ,"world");
 	  Marca m;
 	  m.id=id;
@@ -119,8 +123,8 @@ private:
 	  m.tz=reality.z();
 	  return m;
 	}
-	
       };
+      
       bool exists(int id)
       {
 	QMutexLocker ml(&mutex);
@@ -137,6 +141,7 @@ private:
 	float d = sqrt(pow(m.tx,2) + pow(m.tz,2));
 	return d;
       };
+      
       void borraMarca(int id)
       {
 	if(lista.value(id).reloj.elapsed()>300)
@@ -146,15 +151,12 @@ private:
 	
   ListaMarcas* listaMarcas;
   
-  enum class State  { INIT, SEARCH, NAVEGATE, WAIT, FINISH, WALL};
+  enum class State  { INIT, SEARCH, NAVEGATE, WAIT, WALL, FINISH};
   State estado = State::INIT;
   TLaserData ldata;
   
   InnerModel* inner;
-    void wall();
 
-  
-  
 };
 
 #endif
