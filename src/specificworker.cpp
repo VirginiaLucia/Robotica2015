@@ -23,7 +23,7 @@
 */
 SpecificWorker::SpecificWorker(MapPrx& mprx) : GenericWorker(mprx)
 {
- inner = new InnerModel("/home/salabeta/robocomp/files/innermodel/simpleworld_vl.xml");
+ inner = new InnerModel("/home/salabeta/robocomp/files/innermodel/simpleworld.xml");
  listaMarcas= new ListaMarcas(inner);
 }
 
@@ -46,8 +46,10 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 void SpecificWorker::compute()
 {   
   TBaseState bState;
+
   differentialrobot_proxy->getBaseState(bState);
   inner->updateTransformValues("base", bState.x, 0, bState.z, 0, bState.alpha, 0);//actualiza los valores del robot en el arbol de memoria
+  
   
   ldata = laser_proxy->getLaserData();  //read laser data 
 
@@ -134,10 +136,8 @@ void SpecificWorker::navegate()
 {
     //float rot = 0.9;  //rads per second
     const int offset = 20;
-    //int v;
-    //static float B=-(M_PI/4*M_PI/4)/log(0.3);
     bool giro=false;
-  
+    
     float distance= listaMarcas->distance(listaMarcas->initMark);
     
     //mirar que la distancia sea menor a 300, si es menos buscamos de nuevo.
@@ -146,10 +146,12 @@ void SpecificWorker::navegate()
       std::cout << "Nav existe la marca::" << listaMarcas->initMark << std::endl;
       if(distance<400)
       {	//parar robot
+	qDebug()<<"distancia nav: " << distance << " id: "<< listaMarcas->initMark;
 	differentialrobot_proxy->setSpeedBase(0,0);
+
 	//ESPERAR UN TIEMPO
-	estado = State::WAIT;
 	listaMarcas->initMark = (listaMarcas->initMark + 1) % 4;
+	estado = State::WAIT;
 	return;
       }
     }
@@ -168,36 +170,17 @@ void SpecificWorker::navegate()
 	float dist=(ldata.data()+offset)->dist;
 	
 	//si encuentra un obstaculo
-	if(dist<400)
+	if(dist<450)
 	{
-	    differentialrobot_proxy->setSpeedBase(100, 0.5); //derecha
-	    sleep(3);
 	    estado = State::WALL;
 	    return;
 	}
 	    
-// 	 */ if(angle>0) 
-// 	   */ giro=false;
-// 	  else 
-// 	    giro=true;
-// 	  
-// 	  v=0.5*(ldata.data()+offset)->dist;
-// 	  if(v>500)  v=500;
-// 	  
-// 	  rot=exp(-(angle*angle)/B)/dist;
-// 	  
-// 	  if(giro) 
-// 	    differentialrobot_proxy->setSpeedBase(v, rot);
-// 	  else 
-// 	    differentialrobot_proxy->setSpeedBase(v, -rot);
-// 	  usleep(rand()%(1500000-100000 + 1) + 100000);
-	  
-//	}
 	else{
 	  float tx= listaMarcas->get(listaMarcas->initMark).tx;
 	  float tz= listaMarcas->get(listaMarcas->initMark).tz;
 	  float r= atan2(tx, tz);
-	  differentialrobot_proxy->setSpeedBase(300, r);
+	  differentialrobot_proxy->setSpeedBase(150, 0.4*r);
 	}
 	
     }
@@ -213,23 +196,41 @@ void SpecificWorker::wall()
   std::cout << "WALL" << std::endl;
     RoboCompLaser::TLaserData ldataCopy = ldata;
     int l = ldataCopy.size();
-  
-    std::sort( ldataCopy.begin()+l/2, ldataCopy.end()-5, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;
+    float rot;
+    const int offset = 30;
+   
+    std::sort( ldataCopy.begin()+offset, ldataCopy.end()-offset, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;  //sort laser data from small to large distances using a lambda function.
+    //std::sort( ldataCopy.begin()+l/2, ldataCopy.end()-5, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;
     
-    if((ldataCopy.data() + l/2 )->dist > 400)
+    if((ldataCopy.data() + offset )->dist > 400)
     {
       estado = State::NAVEGATE;
       return;
     }
 
-    if((ldataCopy.data() + l/2 )->dist < 200)
+    /*if((ldataCopy.data() + l/2 )->dist < 200)
     {
       differentialrobot_proxy->setSpeedBase(300, 0.5); //derecha
     }
     else
     {
       differentialrobot_proxy->setSpeedBase(300, -0.5); //izquierda
-    }
+    }*/
+//      if ((ldataCopy.data()+l/2)->angle > 0)
+// 	  rot = -0.4; 
+//     
+//       else if ((ldataCopy.data()+l/2)->angle < 0)
+// 	  rot = 0.4;
+    
+    
+      differentialrobot_proxy->setSpeedBase(50, -0.3);                  
+      usleep(1000000);
+
+
+    
+    
+    
+    
 }
 
 
@@ -243,7 +244,9 @@ void SpecificWorker::newAprilTag(const tagsList& tags)
    for( auto t: tags)
    {
      listaMarcas->add(t);
-     qDebug() << t.id << " x: "<< t.tx << " z: " << t.tz;
-    } 
+    
+   }
+    
+
 }
  

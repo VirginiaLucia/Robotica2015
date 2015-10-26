@@ -94,11 +94,12 @@ private:
 	marca.tz = t.tz * 1000;
 	marca.reloj=QTime::currentTime();
 	
-	lista.insert(t.id, marca);
+	lista.insert(marca.id, marca);
 	if(initMark==marca.id)
 	{
-	  memory = inner->transform("world", QVec::vec3(t.tx, 0, t.tz),"rgbd");	//destino, coordenadas de la marca tag(t.x, t.z) ,origen
+	  memory = inner->transform("world", QVec::vec3(marca.tx, 0, marca.tz),"rgbd");	//destino, coordenadas de la marca tag(t.x, t.z) ,origen
 	  inMemory=true;
+
 	}
       };
       Marca get(int id)
@@ -124,15 +125,16 @@ private:
       {
 	QMutexLocker ml(&mutex);
 	borraMarca(id);
+
 	return lista.contains(id) or inMemory;
       };
+      
       float distance(int initMark)
       {
 	Marca m = get(initMark);
 	QMutexLocker ml(&mutex);
 	borraMarca(initMark);
 	float d = sqrt(pow(m.tx,2) + pow(m.tz,2));
-	qDebug()<<"distancia"<<d;
 	return d;
       };
       void borraMarca(int id)
