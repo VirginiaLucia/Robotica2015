@@ -83,6 +83,7 @@
 #include <DifferentialRobot.h>
 #include <Laser.h>
 #include <AprilTags.h>
+#include <Controller.h>
 
 
 // User includes here
@@ -94,6 +95,7 @@ using namespace RoboCompCommonBehavior;
 using namespace RoboCompDifferentialRobot;
 using namespace RoboCompLaser;
 using namespace RoboCompAprilTags;
+using namespace RoboCompController;
 
 
 
@@ -126,11 +128,29 @@ int ::MyFirstComp::run(int argc, char* argv[])
 #endif
 	int status=EXIT_SUCCESS;
 
+	ControllerPrx controller_proxy;
 	DifferentialRobotPrx differentialrobot_proxy;
 	LaserPrx laser_proxy;
 
 	string proxy, tmp;
 	initialize();
+
+
+	try
+	{
+		if (not GenericMonitor::configGetString(communicator(), prefix, "ControllerProxy", proxy, ""))
+		{
+			cout << "[" << PROGRAM_NAME << "]: Can't read configuration for proxy ControllerProxy\n";
+		}
+		controller_proxy = ControllerPrx::uncheckedCast( communicator()->stringToProxy( proxy ) );
+	}
+	catch(const Ice::Exception& ex)
+	{
+		cout << "[" << PROGRAM_NAME << "]: Exception: " << ex;
+		return EXIT_FAILURE;
+	}
+	rInfo("ControllerProxy initialized Ok!");
+	mprx["ControllerProxy"] = (::IceProxy::Ice::Object*)(&controller_proxy);//Remote server proxy creation example
 
 
 	try

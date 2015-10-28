@@ -23,7 +23,7 @@
 */
 SpecificWorker::SpecificWorker(MapPrx& mprx) : GenericWorker(mprx)
 {
-
+  state.state="IDLE";
 }
 
 /**
@@ -47,6 +47,19 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 
 void SpecificWorker::compute()
 {
+  TBaseState bState;
+  TLaserData ldata;
+  
+  try
+  {
+     inner = new InnerModel("/home/salabeta/robocomp/files/innermodel/simpleworld.xml");
+     differentialrobot_proxy->getBaseState(bState);
+     std::sort( ldata.begin()+20, ldata.end()-20, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;
+  }
+  catch(const Ice::Exception &e)
+  {
+    std::cout << "Error reading from Camera" << e << std::endl;
+  }
 // 	try
 // 	{
 // 		camera_proxy->getYImage(0,img, cState, bState);
@@ -62,12 +75,12 @@ void SpecificWorker::compute()
 
 float SpecificWorker::go(const TargetPose &target)
 {
-
+ qDebug()<<"GO";
 }
 
 NavState SpecificWorker::getState()
 {
-
+  return state;
 }
 
 void SpecificWorker::stop()

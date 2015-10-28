@@ -5,17 +5,6 @@
 #include <innermodel/innermodel.h>
 #include <math.h>
 
-typedef struct
-{
-  int id;
-  float tx;
-  float ty;
-  float tz;
-  float rx;
-  float ry;
-  float rz;
-  QTime reloj;
-} Marca;
 
 class ListaMarcas
 {    
@@ -23,6 +12,19 @@ class ListaMarcas
 public:
    ListaMarcas(InnerModel *inner_);
    ~ListaMarcas();
+  
+  typedef struct
+  {
+    int id;
+    float tx;
+    float ty;
+    float tz;
+    float rx;
+    float ry;
+    float rz;
+    QTime reloj;
+  } Marca;
+  
    void add(const RoboCompAprilTags::tag &t);
    Marca get(int id);
    bool exists(int id);
@@ -32,6 +34,8 @@ public:
    void setInitMark(int id);
    bool getInMemory();
    void setInMemory(bool in);
+   
+   
    
       
 private:

@@ -40,6 +40,14 @@ Q_OBJECT
 public:
 	SpecificWorker(MapPrx& mprx);	
 	~SpecificWorker();
+	
+	typedef struct
+	{
+	  //target;
+	  bool b;
+	  //subtarget;
+	} currentTarget;
+	
 	bool setParams(RoboCompCommonBehavior::ParameterList params);
 
 	float go(const TargetPose &target);
@@ -50,7 +58,9 @@ public slots:
 	void compute(); 	
 
 private:
-	
+	NavState state;
+	InnerModel* inner;
+
 };
 
 #endif

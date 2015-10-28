@@ -67,14 +67,18 @@ void SpecificWorker::compute()
 	std::cout << "SEARCH" << std::endl;
 	searchMark(listaMarcas->getInitMark());
 	break;
-      case State::NAVEGATE:
+      case State::CONTROLLER:
+	std::cout << "CONTROLLER" << std::endl;
+	controller();
+	break;
+      /*case State::NAVEGATE:
 	std::cout << "NAVEGATE" << std::endl;
 	  navegate();
 	break;
       case State::WALL:
 	std::cout << "WALL" << std::endl;
 	  wall();
-	break;
+	break;*/
       case State::WAIT:
 	std::cout << "WAIT" << std::endl;
 	  wait();
@@ -99,7 +103,7 @@ void SpecificWorker::searchMark(int initMark)
       {
 	std::cout << e << std::endl;
       }
-      estado = State::NAVEGATE;
+      estado = State::CONTROLLER;
       firstTime=true;
       return;
     }
@@ -123,11 +127,14 @@ void SpecificWorker::wait()
 {
     static bool primeraVez=true;
     static QTime reloj;
+    int initMark=listaMarcas->getInitMark();
     
     if(primeraVez)
     {
       reloj = QTime::currentTime();
       primeraVez=false;
+      int newState = (initMark + 1) % 4;
+      listaMarcas->setInitMark(newState);
       listaMarcas->setInMemory(false);
     }
     
@@ -144,7 +151,6 @@ void SpecificWorker::navegate()
     const int offset = 20;
     int initMark=listaMarcas->getInitMark();
     float distance= listaMarcas->distance(initMark);
-    int newState;
     
     if(listaMarcas->exists(initMark))
     {
@@ -153,8 +159,6 @@ void SpecificWorker::navegate()
       {	
 	differentialrobot_proxy->setSpeedBase(0,0);
 
-	newState = (initMark + 1) % 4;
-	listaMarcas->setInitMark(newState);
 	estado = State::WAIT;
 	return;
       }
@@ -224,7 +228,26 @@ void SpecificWorker::wall()
 
 void SpecificWorker::controller()
 {
-  
+  try
+  {
+    NavState state=controller_proxy->getState();
+    if(state.state == "IDLE")
+    {
+      ListaMarcas::Marca m=listaMarcas->get(listaMarcas->getInitMark());
+      TargetPose t={m.tx, m.ty, m.tz};
+      controller_proxy->go(t);
+      
+    }
+    else if(state.state == "FINISH")
+    {
+      estado = State::WAIT;
+      return;
+    }
+  }
+  catch(const Ice::Exception &ex)
+    {
+        std::cout << ex << std::endl;
+    }
 }
 
 

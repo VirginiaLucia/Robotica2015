@@ -28,6 +28,7 @@ QObject()
 #endif
 
 {
+	controller_proxy = (*(ControllerPrx*)mprx["ControllerProxy"]);
 	differentialrobot_proxy = (*(DifferentialRobotPrx*)mprx["DifferentialRobotProxy"]);
 	laser_proxy = (*(LaserPrx*)mprx["LaserProxy"]);
 

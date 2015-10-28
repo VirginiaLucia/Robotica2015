@@ -53,7 +53,7 @@ void ListaMarcas::add(const RoboCompAprilTags::tag &t)
   }
 }
      
-Marca ListaMarcas::get(int id)
+ListaMarcas::Marca ListaMarcas::get(int id)
 {
   QMutexLocker ml(&mutex);
   if(lista.contains(id))
