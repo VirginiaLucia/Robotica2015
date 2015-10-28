@@ -1,6 +1,7 @@
 
 # Sources set
 SET ( SOURCES
+  tagslist.cpp
   specificworker.cpp
   specificmonitor.cpp
 #  $ENV{ROBOCOMP}/classes/agmInner/agmInner.cpp
@@ -8,6 +9,7 @@ SET ( SOURCES
 
 # Headers set
 SET ( HEADERS
+  tagslist.h
   specificworker.h
   specificmonitor.h
 #  $ENV{ROBOCOMP}/classes/agmInner/agmInner.h

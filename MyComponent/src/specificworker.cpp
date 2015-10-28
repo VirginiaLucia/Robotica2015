@@ -65,7 +65,7 @@ void SpecificWorker::compute()
 	break;
       case State::SEARCH:
 	std::cout << "SEARCH" << std::endl;
-	searchMark(listaMarcas->initMark);
+	searchMark(listaMarcas->getInitMark());
 	break;
       case State::NAVEGATE:
 	std::cout << "NAVEGATE" << std::endl;
@@ -128,7 +128,7 @@ void SpecificWorker::wait()
     {
       reloj = QTime::currentTime();
       primeraVez=false;
-      listaMarcas->inMemory=false;
+      listaMarcas->setInMemory(false);
     }
     
     if(reloj.elapsed() > 3000)
@@ -142,16 +142,19 @@ void SpecificWorker::wait()
 void SpecificWorker::navegate()
 {
     const int offset = 20;
-    float distance= listaMarcas->distance(listaMarcas->initMark);
+    int initMark=listaMarcas->getInitMark();
+    float distance= listaMarcas->distance(initMark);
+    int newState;
     
-    if(listaMarcas->exists(listaMarcas->initMark))
+    if(listaMarcas->exists(initMark))
     {
-      std::cout << "Existe la marca::" << listaMarcas->initMark << std::endl;
+      std::cout << "Existe la marca::" << initMark << std::endl;
       if(distance<400)
       {	
 	differentialrobot_proxy->setSpeedBase(0,0);
 
-	listaMarcas->initMark = (listaMarcas->initMark + 1) % 4;
+	newState = (initMark + 1) % 4;
+	listaMarcas->setInitMark(newState);
 	estado = State::WAIT;
 	return;
       }
@@ -177,8 +180,8 @@ void SpecificWorker::navegate()
 	}  
 	else
 	{
-	  float tx= listaMarcas->get(listaMarcas->initMark).tx;
-	  float tz= listaMarcas->get(listaMarcas->initMark).tz;
+	  float tx= listaMarcas->get(initMark).tx;
+	  float tz= listaMarcas->get(initMark).tz;
 	  float r= atan2(tx, tz);
 	  differentialrobot_proxy->setSpeedBase(150, 0.4*r);
 	}
@@ -217,6 +220,11 @@ void SpecificWorker::wall()
     
      differentialrobot_proxy->setSpeedBase(40, rot);
      usleep(1000000);
+}
+
+void SpecificWorker::controller()
+{
+  
 }
 
 
