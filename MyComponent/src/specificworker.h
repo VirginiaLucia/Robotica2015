@@ -57,11 +57,9 @@ public slots:
 private:
   ListaMarcas* listaMarcas;
 
-  //tagsList* listaMarcas;
   enum class State  { INIT, SEARCH, NAVEGATE, WAIT, WALL, FINISH, CONTROLLER};
   State estado = State::INIT;
   TLaserData ldata;
-  
   InnerModel* inner;
 
 };

@@ -85,6 +85,7 @@ void SpecificWorker::compute()
 	break;
       case State::FINISH:
 	std::cout << "FINISH" << std::endl;
+	
 	break;
     } 
 }
@@ -231,15 +232,17 @@ void SpecificWorker::controller()
   try
   {
     NavState state=controller_proxy->getState();
+    //qDe
     if(state.state == "IDLE")
     {
       ListaMarcas::Marca m=listaMarcas->get(listaMarcas->getInitMark());
-      TargetPose t={m.tx, m.ty, m.tz};
+      QVec w = inner -> transform("world",QVec::vec3(m.tx,m.ty,m.tz),"rgbd");
+      TargetPose t={w.x(), w.y(), w.z()};
       controller_proxy->go(t);
-      
     }
     else if(state.state == "FINISH")
     {
+      
       estado = State::WAIT;
       return;
     }

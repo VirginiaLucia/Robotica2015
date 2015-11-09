@@ -43,15 +43,15 @@ public:
 	
 	typedef struct
 	{
-	  //target;
-	  bool b;
-	  //subtarget;
+	  QVec target, subTarget;
+	  bool activeT, activeSub=false;
 	} currentTarget;
 	
 	bool setParams(RoboCompCommonBehavior::ParameterList params);
 
 	float go(const TargetPose &target);
 	NavState getState();
+	
 	void stop();
 
 public slots:
@@ -60,6 +60,15 @@ public slots:
 private:
 	NavState state;
 	InnerModel* inner;
+	TLaserData ldata;
+	TBaseState bState;
+	currentTarget cTarget;
+	void createSubTarget();
+	void goToSubTarget();
+	bool hayCamino();
+	void goToTarget();
+	bool heLlegado();
+
 
 };
 
