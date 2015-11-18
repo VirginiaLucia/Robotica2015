@@ -133,25 +133,15 @@ bool SpecificWorker::hayCamino()
 
 void SpecificWorker::goToTarget()
 {
-   qDebug()<<  __FUNCTION__<<"ir a Target"; 
+   qDebug()<<"andar";
 
     QVec t = inner->transform("rgbd", cTarget.target, "world");
     float alpha =atan2(t.x(), t.z());
     float r= 0.3*alpha;
     float d = 0.3*t.norm2();
-    
-    if(d<100)
-    {
-        cTarget.activeSub=false;
-        differentialrobot_proxy->setSpeedBase(0,0);
-	sleep(1);
-      
-    }else
-    {
-      if( fabs(r) > 0.2) d = 0;
-      if(d>300)d=300;
-      differentialrobot_proxy->setSpeedBase(d,r);
-    }
+    if( fabs(r) > 0.2) d = 0;
+    if(d>300)d=300;
+    differentialrobot_proxy->setSpeedBase(d,r);
 }
 
 void SpecificWorker::goToSubTarget()
@@ -180,61 +170,7 @@ void SpecificWorker::createSubTarget()
 {
   
   qDebug() <<  __FUNCTION__ << "creando subTarget";
-  uint i;
-  //QVec t;
-  //float dt;
-  
-  //t = inner->transform("rgbd", cTarget.target, "world");
-
-  //float d = t.norm2();
-  //float alpha =atan2(t.x(), t.z() );
-
-  //Extremos
-  /*if( alpha > ldata[0].angle ) 
-  {
-    
-    cTarget.subTarget = QVec::vec3(ldata[0].dist *sin(ldata[0].angle),0, ldata[0].dist *cos(ldata[0].angle)-400);
-    cTarget.activeSub=true;
-    return;
-  }
- 
-  if( alpha < ldata[ldata.size()-1].angle ) 
-  {
-    int r = ldata.size()-1;
-    cTarget.subTarget = QVec::vec3(ldata[r].dist *sin(ldata[r].angle),0, ldata[r].dist *cos(ldata[r].angle)-400);  
-    cTarget.activeSub=true;
-    return;
-  }
-  */  
-    
-  
-    
-  /*for(i = 5; i<ldata.size()-5; i++)
-  {
-      if(ldata[i].angle < alpha)
-      {
-	if(d>ldata[i].dist)
-	{
-	  dt=ldata[i].dist;
-	 break;
-	}
-      } 
-  }
-  qDebug()<<  __FUNCTION__<<i;
-  qDebug()<<  __FUNCTION__<<ldata[i].dist<<ldata[i].angle;
-  
-  for(j = i;j<ldata.size()-5;j++)
-  {
-      qDebug()<<  __FUNCTION__<<dt<< dt+(dt*0.2) <<ldata[j].dist << ldata[j].angle;
-    
-      if(ldata[j].dist > (dt+(dt*0.2)) and ldata[j].angle < 0)
-      {
-	cTarget.subTarget=inner->transform("world", QVec::vec3(ldata[j].dist *sin(ldata[j].angle)-2000,0, ldata[j].dist *cos(ldata[j].angle)), "laser");
-	cTarget.activeSub=true;
-	break;
-      }
-  }
-  qDebug()<<  __FUNCTION__<< "Subtargeet" << QVec::vec3(ldata[j].dist *sin(ldata[j].angle),0, ldata[j].dist *cos(ldata[j].angle));*/
+  /*uint i;
   
   for(i = 5; i<ldata.size()-5; i++)
   {
@@ -253,7 +189,58 @@ void SpecificWorker::createSubTarget()
       cTarget.activeSub=true;
       break;
     }
-  }
+  }*/
+  
+  float dt;
+  QVec t = inner->transform("rgbd", cTarget.target, "world");
+  float d = t.norm2();
+  float alpha =atan2(t.x(), t.z() );
+  uint i,j;
+	const int R =400;
+	for(i=ldata.size()/2; i>5; i--)
+	{
+		if( (ldata[i].dist - ldata[i-1].dist) < -R )
+		{
+			if(i<=7) 
+			{ 
+				i=0; 
+				break;
+			}
+			uint k=i-2;
+			while( (k >= 0) and (fabs( ldata[k].dist*sin(ldata[k].angle - ldata[i-1].angle)) < R ))
+			{ k--; }
+			i=k;
+			break;
+		}
+	}
+	for(j=ldata.size()/2-5; j<ldata.size()-1; j++)
+	{
+		if( (ldata[j].dist - ldata[j+1].dist) < -R )
+		{
+			if(j>ldata.size()-3)
+			{
+				j=ldata.size()-1;
+				break;
+			}
+			uint k=j+2;
+			while( (k < ldata.size()) and (fabs( ldata[k].dist*sin(ldata[k].angle - ldata[j+1].angle)) < R ))
+			{ k++; }
+			j=k;
+			break;
+		}
+	}
+	
+	QVec sI = inner->transform("world", QVec::vec3(ldata[j].dist *sin(ldata[j].angle),0, ldata[j].dist *cos(ldata[j].angle)), "laser");
+	QVec sD = inner->transform("world", QVec::vec3(ldata[i].dist *sin(ldata[i].angle),0, ldata[i].dist *cos(ldata[i].angle)), "laser");
+	
+	if( (sI-cTarget.target).norm2() > (sD-cTarget.target).norm2() ) 
+		cTarget.subTarget=sD;
+	else
+		cTarget.subTarget=sI;
+		
+	cTarget.activeSub=true;
+  qDebug() << "Subtarget: " << cTarget.subTarget;
+
   
 }
 
