@@ -36,6 +36,11 @@
 #include <math.h>
 #include <tagslist.h>
 
+#include <iostream>
+#include <lemon/list_graph.h>
+using namespace lemon;
+using namespace std;
+
 class SpecificWorker : public GenericWorker
 {
 Q_OBJECT
@@ -53,6 +58,7 @@ public slots:
 	void wait();
 	void wall();
 	void controller();
+	void crearGrafo();
 
 private:
   ListaMarcas* listaMarcas;
@@ -61,6 +67,7 @@ private:
   State estado = State::INIT;
   TLaserData ldata;
   InnerModel* inner;
+  QVec nodo;
 
 };
 

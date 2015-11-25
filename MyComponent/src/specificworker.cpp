@@ -23,7 +23,7 @@
 */
 SpecificWorker::SpecificWorker(MapPrx& mprx) : GenericWorker(mprx)
 {
- inner = new InnerModel("/home/salabeta/robocomp/files/innermodel/simpleworld.xml");
+ inner = new InnerModel("/home/salabeta/Robotica2015/RoCKIn@home/world/apartment.xml");
  listaMarcas= new ListaMarcas(inner);
 }
 
@@ -48,7 +48,7 @@ void SpecificWorker::compute()
     try
     {
       differentialrobot_proxy->getBaseState(bState);
-      inner->updateTransformValues("base", bState.x, 0, bState.z, 0, bState.alpha, 0);	//actualiza los valores del robot en el arbol de memoria
+      inner->updateTransformValues("robot", bState.x, 0, bState.z, 0, bState.alpha, 0);	//actualiza los valores del robot en el arbol de memoria
     }
     catch(const Ice::Exception e)
     {
@@ -57,7 +57,7 @@ void SpecificWorker::compute()
   
     ldata = laser_proxy->getLaserData();  //read laser data 
 
-    switch( estado )
+    /*switch( estado )
     {
       case State::INIT:
 	std::cout << "INIT" << std::endl;
@@ -71,14 +71,6 @@ void SpecificWorker::compute()
 	std::cout << "CONTROLLER" << std::endl;
 	controller();
 	break;
-      /*case State::NAVEGATE:
-	std::cout << "NAVEGATE" << std::endl;
-	  navegate();
-	break;
-      case State::WALL:
-	std::cout << "WALL" << std::endl;
-	  wall();
-	break;*/
       case State::WAIT:
 	std::cout << "WAIT" << std::endl;
 	  wait();
@@ -87,8 +79,67 @@ void SpecificWorker::compute()
 	std::cout << "FINISH" << std::endl;
 	
 	break;
-    } 
+    }*/
+    switch( estado )
+    {
+      case State::INIT:
+	std::cout << "INIT" << std::endl;
+	crearGrafo();
+	break;
+      case State::CONTROLLER:
+	std::cout << "CONTROLLER" << std::endl;
+	controller();
+	break;
+    }
 }
+
+void SpecificWorker::crearGrafo()
+{
+     ldata = laser_proxy->getLaserData();
+     int maxDist = 0;
+     int i, j;
+     
+      for(i = 5; i<ldata.size()-5; i++)
+      {
+	if(ldata[i].dist > maxDist)
+	{
+	  maxDist = ldata[i].dist;
+	  j=i;
+	}
+      }
+      nodo=inner->laserTo("world", "laser", maxDist, ldata[j].angle);
+      estado = State::CONTROLLER;
+}
+
+void SpecificWorker::controller()
+{
+  try
+  {
+    NavState state=controller_proxy->getState();
+    //qDe
+    if(state.state == "IDLE")
+    {
+
+      //TargetPose t={nodo.x(), nodo.y(), nodo.z()};
+      TargetPose t={2500, 0, -5000};
+      qDebug()<<"nodo: "<<nodo;
+      controller_proxy->go(t);
+    }
+    else if(state.state == "FINISH")
+    {
+      crearGrafo();
+      //estado = State::WAIT;
+      return;
+    }
+  }
+  catch(const Ice::Exception &ex)
+    {
+        std::cout << ex << std::endl;
+    }
+}
+
+
+
 
 void SpecificWorker::searchMark(int initMark)
 {
@@ -125,7 +176,8 @@ void SpecificWorker::searchMark(int initMark)
 }
 
 void SpecificWorker::wait()
-{
+{  inner = new InnerModel("/home/salabeta/robocomp/files/innermodel/simpleworld.xml");
+
     static bool primeraVez=true;
     static QTime reloj;
     int initMark=listaMarcas->getInitMark();
@@ -162,7 +214,8 @@ void SpecificWorker::navegate()
 
 	estado = State::WAIT;
 	return;
-      }
+      }  inner = new InnerModel("/home/salabeta/robocomp/files/innermodel/simpleworld.xml");
+
     }
     else
     {
@@ -227,7 +280,7 @@ void SpecificWorker::wall()
      usleep(1000000);
 }
 
-void SpecificWorker::controller()
+/*void SpecificWorker::controller()
 {
   try
   {
@@ -251,7 +304,7 @@ void SpecificWorker::controller()
     {
         std::cout << ex << std::endl;
     }
-}
+}*/
 
 
 ////////////////////////////

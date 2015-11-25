@@ -23,7 +23,7 @@
 */
 SpecificWorker::SpecificWorker(MapPrx& mprx) : GenericWorker(mprx)
 {
-  inner = new InnerModel("/home/salabeta/robocomp/files/innermodel/simpleworld.xml");
+  inner = new InnerModel("/home/salabeta/Robotica2015/RoCKIn@home/world/apartment.xml");
   state.state="IDLE";
 
 }
@@ -50,14 +50,20 @@ void SpecificWorker::compute()
   {
      differentialrobot_proxy->getBaseState(bState);
      ldata = laser_proxy->getLaserData();
-     inner->updateTransformValues("base", bState.x, 0, bState.z, 0, bState.alpha, 0);
+     inner->updateTransformValues("robot", bState.x, 0, bState.z, 0, bState.alpha, 0);
      
      if( state.state == "WORKING")
      {
 	if( heLlegado() )
 	{ 
-	  qDebug()<<"he llegado";
-	  differentialrobot_proxy->setSpeedBase(0,0);
+	  qDebug()<<"llegado";
+	  try{
+	    differentialrobot_proxy->setSpeedBase(0,0);
+	  }
+	  catch(const Ice::Exception &ex)
+	  {
+	      std::cout << ex << std::endl;
+	  }
 	  state.state = "FINISH";
 	  sleep(2);
 	   state.state = "IDLE";
@@ -82,33 +88,30 @@ void SpecificWorker::compute()
   {
     std::cout << "Error reading from Camera" << e << std::endl;
   }
-// 	try
-// 	{
-// 		camera_proxy->getYImage(0,img, cState, bState);
-// 		memcpy(image_gray.data, &img[0], m_width*m_height*sizeof(uchar));
-// 		searchTags(image_gray);
-// 	}
-// 	catch(const Ice::Exception &e)
-// 	{
-// 		std::cout << "Error reading from Camera" << e << std::endl;
-// 	}
 }
 
 bool SpecificWorker::heLlegado()
 {
-  QVec t = inner->transform("rgbd", cTarget.target, "world");
-  //qDebug()<< cTarget.target;
+  QVec t = inner->transform("laser", cTarget.target, "world");
+  qDebug()<< __FUNCTION__<< cTarget.target;
+  qDebug()<< __FUNCTION__<< t;
+  
   float d = t.norm2();
-  //qDebug()<< "distancia: "<<d;
-  if ( d < 400 ) 
+  qDebug()<< __FUNCTION__<< d;
+  
+  if ( d < 400.0 ){
+    qDebug()<< __FUNCTION__<< d;
     return true;
-  else return false;
+  }
+  else 
+    return false;
 }
 
 bool SpecificWorker::hayCamino()
 {
   
-  QVec t = inner->transform("rgbd", cTarget.target, "world");
+  QVec t = inner->transform("laser", cTarget.target, "world");
+    qDebug()<< __FUNCTION__<< cTarget.target;
   float d = t.norm2();
   float alpha =atan2(t.x(), t.z() );
   
@@ -133,15 +136,26 @@ bool SpecificWorker::hayCamino()
 
 void SpecificWorker::goToTarget()
 {
-   qDebug()<<"andar";
+   qDebug()<<"andar" << inner->transform("world", "robot");
 
-    QVec t = inner->transform("rgbd", cTarget.target, "world");
+    QVec t = inner->transform("laser", cTarget.target, "world");
+    qDebug()<< __FUNCTION__<< cTarget.target;
+
+    qDebug()<<  __FUNCTION__<< t;
     float alpha =atan2(t.x(), t.z());
-    float r= 0.3*alpha;
+    float r= 0.1*alpha;
     float d = 0.3*t.norm2();
+        qDebug()<< "velocidad " << d;
     if( fabs(r) > 0.2) d = 0;
     if(d>300)d=300;
-    differentialrobot_proxy->setSpeedBase(d,r);
+    try
+    {
+      differentialrobot_proxy->setSpeedBase(d,r);
+    }
+    catch(const Ice::Exception &ex)
+    {
+        std::cout << ex << std::endl;
+    }
 }
 
 void SpecificWorker::goToSubTarget()
@@ -162,7 +176,13 @@ void SpecificWorker::goToSubTarget()
     {
       if( fabs(r) > 0.2) d = 0;
       if(d>300)d=300;
-      differentialrobot_proxy->setSpeedBase(d,r);
+      try{
+	differentialrobot_proxy->setSpeedBase(d,r);
+      }
+      catch(const Ice::Exception &ex)
+      {
+	  std::cout << ex << std::endl;
+      }
     }   
 }
 
@@ -240,11 +260,8 @@ void SpecificWorker::createSubTarget()
 		
 	cTarget.activeSub=true;
   qDebug() << "Subtarget: " << cTarget.subTarget;
-
   
 }
-
-
 
 float SpecificWorker::go(const TargetPose &target)
 {
@@ -260,8 +277,6 @@ NavState SpecificWorker::getState()
 {
   return state;
 }
-
-
 
 void SpecificWorker::stop()
 {
