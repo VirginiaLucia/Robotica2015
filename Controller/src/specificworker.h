@@ -31,8 +31,12 @@
 #ifndef SPECIFICWORKER_H
 #define SPECIFICWORKER_H
 
+
 #include <genericworker.h>
 #include <innermodel/innermodel.h>
+#include <osgviewer/osgview.h>
+#include <innermodel/innermodelviewer.h>
+#include <innermodel/innermodeldraw.h>
 
 class SpecificWorker : public GenericWorker
 {
@@ -41,34 +45,53 @@ public:
 	SpecificWorker(MapPrx& mprx);	
 	~SpecificWorker();
 	
-	typedef struct
-	{
-	  QVec target, subTarget;
-	  bool activeT, activeSub=false;
-	} currentTarget;
+
 	
 	bool setParams(RoboCompCommonBehavior::ParameterList params);
 
 	float go(const TargetPose &target);
 	NavState getState();
+	float goBackwards(const TargetPose &target);
+	float goReferenced(const TargetPose &target, const float xRef, const float zRef, const float threshold);
+	float changeTarget(const TargetPose &target);
 	
 	void stop();
+	void mapBasedTarget(const NavigationParameterMap &parameters);
 
 public slots:
 	void compute(); 	
 
 private:
-	NavState state;
+  
+  	typedef struct
+	{
+	  QVec target, subTarget;
+	  float rot;
+	  bool activeT, activeSub=false;
+	} currentTarget;
+	
+	//NavState state;
+	RoboCompTrajectoryRobot2D::NavState nState;
 	InnerModel* inner;
-	TLaserData ldata;
+	TLaserData ldata, ldataR;
 	TBaseState bState;
 	currentTarget cTarget;
+	QGraphicsScene scene;
+	
 	void createSubTarget();
 	void goToSubTarget();
 	bool hayCamino();
 	void goToTarget();
 	bool heLlegado();
-
+	void stopRobot();
+	void drawTarget(const QVec& target);
+	void undrawTarget(const QString &name);
+	
+	enum class State  {INIT, IDLE, WORKING, FINISH, TURN};
+	State state = State::INIT;
+	
+	OsgView *osgView;
+	InnerModelViewer *innerViewer;
 
 };
 

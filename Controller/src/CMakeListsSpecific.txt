@@ -17,3 +17,4 @@ INCLUDE($ENV{ROBOCOMP}/cmake/modules/ipp.cmake)
 
 ADD_DEFINITIONS( -std=c++11 )
 
+SET (LIBS ${LIBS} -losgViewer)
