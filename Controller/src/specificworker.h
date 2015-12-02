@@ -37,6 +37,7 @@
 #include <osgviewer/osgview.h>
 #include <innermodel/innermodelviewer.h>
 #include <innermodel/innermodeldraw.h>
+#include <math.h>
 
 class SpecificWorker : public GenericWorker
 {
@@ -81,13 +82,17 @@ private:
 	void createSubTarget();
 	void goToSubTarget();
 	bool hayCamino();
+	void hayCamino2();
 	void goToTarget();
-	bool heLlegado();
+	void heLlegado();
 	void stopRobot();
 	void drawTarget(const QVec& target);
 	void undrawTarget(const QString &name);
+	void turn();
+	bool caja(const QVec& t);
+	bool dentroLaser(const QVec& e);
 	
-	enum class State  {INIT, IDLE, WORKING, FINISH, TURN};
+	enum class State  {INIT, IDLE, WORKING, FINISH, TURN, GOTARGET, FREEWAY, GOSUBTARGET};
 	State state = State::INIT;
 	
 	OsgView *osgView;

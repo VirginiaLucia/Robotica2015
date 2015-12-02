@@ -57,29 +57,6 @@ void SpecificWorker::compute()
   
     ldata = laser_proxy->getLaserData();  //read laser data 
 
-    /*switch( estado )
-    {
-      case State::INIT:
-	std::cout << "INIT" << std::endl;
-	estado = State::SEARCH;
-	break;
-      case State::SEARCH:
-	std::cout << "SEARCH" << std::endl;
-	searchMark(listaMarcas->getInitMark());
-	break;
-      case State::CONTROLLER:
-	std::cout << "CONTROLLER" << std::endl;
-	controller();
-	break;
-      case State::WAIT:
-	std::cout << "WAIT" << std::endl;
-	  wait();
-	break;
-      case State::FINISH:
-	std::cout << "FINISH" << std::endl;
-	
-	break;
-    }*/
     switch( estado )
     {
       case State::INIT:
