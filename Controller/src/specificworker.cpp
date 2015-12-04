@@ -123,13 +123,11 @@ void SpecificWorker::compute()
 	  qDebug()<<"ESTADO::GOSUBTARGET";
 	  if(cTarget.activeSub == true)
 	    {
-	      //qFatal("fary");
 	      goToSubTarget();
 	      state = State::WORKING;
 	    }
 	    else
 	    {
-	      //qFatal("fary");
 	      createSubTarget();
 	    }
 	  break;
@@ -183,43 +181,46 @@ void SpecificWorker::heLlegado()
     float d = t.norm2();
     
     qDebug() << __FUNCTION__<< "distancia d : " << d;
-    if ( d < 252 ) {
+    if ( d < 100 ) 
+    {
         qDebug() << __FUNCTION__<< "He llegado";
 	 state = State::FINISH;
-        //return true;
-    } else {
-       state = State::FREEWAY;
-       //return false;
-       
+    } 
+    else 
+    {
+       state = State::FREEWAY;       
     }
 }
 
-bool SpecificWorker::hayCamino()
+/*bool SpecificWorker::hayCamino()
 {
 
     QVec t = inner->transform ( "robot", cTarget.target, "world" );
     float d = t.norm2();
     float alpha =atan2 ( t.x(), t.z() );
 
-    for ( uint i = 0; i<ldata.size(); i++ ) {
-        if ( ldata[i].angle <= alpha ) {
-            if ( ldata[i].dist < d ) {
+    for ( uint i = 0; i<ldata.size(); i++ )
+    {
+        if ( ldata[i].angle <= alpha )
+	{
+            if ( ldata[i].dist < d )
+	    {
 	        qDebug() <<"NO hay camino";
 		state = State::GOSUBTARGET;
-                //return false;
-            } else {
+            } 
+            else
+	    {
                 cTarget.activeSub=false;
                 qDebug() <<"hay camino";
 		state = State::GOTARGET;
-                //return true;
             }
         }
     }
     
     qDebug() <<"NO ve la marca";
     state = State::TURN;
-    //return false;
 }
+*/
 
 void SpecificWorker::hayCamino2()
 {
@@ -237,7 +238,6 @@ void SpecificWorker::hayCamino2()
 	        qDebug() <<"NO hay camino";
 		state = State::GOSUBTARGET;
 		return;
-                //return false;
             }
             else if(caja(t))
 	    {
@@ -245,14 +245,12 @@ void SpecificWorker::hayCamino2()
                 qDebug() <<"hay camino";
 		state = State::GOTARGET;
 		return;
-                //return true;
             }
         }
     }
     
     qDebug() <<"NO ve la marca";
     state = State::TURN;
-    //return false;
 }
 
 bool SpecificWorker::caja(const QVec &t)
@@ -266,8 +264,9 @@ bool SpecificWorker::caja(const QVec &t)
   for(float landa=landaD; landa<t.norm2();landa+=landaD)
   {
     QVec p = tn*landa;
-    float x = R*cos(M_PI/4);
-    float z = R*sin(M_PI/4);
+    float z = R*cos(M_PI/4);
+    float x = R*sin(M_PI/4);
+    
     QVec e1 = p + QVec::vec3(x,0,z);
     if(!dentroLaser(e1)) return false;
     QVec e2 = p + QVec::vec3(-x,0,z);
@@ -287,17 +286,12 @@ bool SpecificWorker::dentroLaser(const QVec &e)
   
   for ( uint i = 0; i<ldata.size(); i++ ) 
   {
-    if ( ldata[i].angle <= alpha ) 
-    {
-      if ( ldata[i].dist > d) 
-      {
-	qDebug() <<"Dentro del laser";
-	 return true;
-      }
-    }
-   }
-   qDebug() <<"Fuera del laser";
-   return false;
+     if ( ldata[i].dist > d) 
+     {
+	return true;
+     }
+  }
+  return false;
 }
 
 void SpecificWorker::goToTarget()
@@ -305,47 +299,71 @@ void SpecificWorker::goToTarget()
     QVec t = inner->transform ( "robot", cTarget.target, "world" );
     qDebug() << __FUNCTION__<< cTarget.target;
 
-    qDebug() <<  __FUNCTION__<< t;
     float alpha =atan2 ( t.x(), t.z() );
     float r= 0.3*alpha;
     float d = 0.3*t.norm2();
-    qDebug() << "velocidad " << d;
-    if ( fabs ( r ) > 0.2 ) {
+    
+    if ( fabs ( r ) > 0.2 )
+    {
         d = 0;
     }
-    if ( d>300 ) {
+    
+    if ( d > 300 )
+    {
         d=300;
     }
-    try {
+    
+    try 
+    {
         differentialrobot_proxy->setSpeedBase ( d,r );
-    } catch ( const Ice::Exception &ex ) {
+    } 
+    catch ( const Ice::Exception &ex )
+    {
         std::cout << ex << std::endl;
     }
 }
 
 void SpecificWorker::goToSubTarget()
 {
-    qDebug() <<  __FUNCTION__<<"ir a subTarget";
+    qDebug() <<  __FUNCTION__<<"IR a subTarget";
+    
     QVec t = inner->transform ( "robot", cTarget.subTarget, "world" );
     float alpha =atan2 ( t.x(), t.z() );
     float r= 0.4*alpha;
     float d = t.norm2();
 
-    if ( d<100 ) {
+    if ( d < 100 ) 
+    {
         cTarget.activeSub=false;
-        differentialrobot_proxy->setSpeedBase ( 0,0 );
+	try
+	{
+            differentialrobot_proxy->setSpeedBase ( 0, 0);
+        } 
+        catch ( const Ice::Exception &ex ) 
+	{
+            std::cout << ex << std::endl;
+        }
         sleep ( 1 );
 
-    } else {
-        if ( fabs ( r ) > 0.2 ) {
+    } 
+    else
+    {
+        if ( fabs ( r ) > 0.2 )
+	{
             d = 0;
         }
-        if ( d>300 ) {
+        
+        if ( d>300 )
+	{
             d=300;
         }
-        try {
+        
+        try 
+        {
             differentialrobot_proxy->setSpeedBase ( d,r );
-        } catch ( const Ice::Exception &ex ) {
+        } 
+        catch ( const Ice::Exception &ex ) 
+	{
             std::cout << ex << std::endl;
         }
     }
@@ -354,68 +372,75 @@ void SpecificWorker::goToSubTarget()
 void SpecificWorker::createSubTarget()
 {
 
-    qDebug() <<  __FUNCTION__ << "creando subTarget";
+    qDebug() <<  __FUNCTION__ << "CREANDO subTarget";
 
     float dt;
-    QVec t = inner->transform ( "rgbd", cTarget.target, "world" );
+    QVec t = inner->transform ( "robot", cTarget.target, "world" );
     float d = t.norm2();
     float alpha =atan2 ( t.x(), t.z() );
     uint i,j;
-    //const int R =400;
 
-    for ( i = 5; i<ldata.size()-5; i++ ) {
-        if ( ldata[i].angle < alpha ) {
-            if ( d>ldata[i].dist ) {
+    for ( i = 5; i<ldata.size()-5; i++ )
+    {
+        if ( ldata[i].angle < alpha )
+	{
+            if ( d > ldata[i].dist )
+	    {
                 dt=ldata[i].dist;
                 break;
             }
         }
     }
-    qDebug() <<  __FUNCTION__<<i;
-    qDebug() <<  __FUNCTION__<<ldata[i].dist<<ldata[i].angle;
 
-    for ( j = i; j<ldata.size()-5; j++ ) {
-        qDebug() <<  __FUNCTION__<<dt<< dt+ ( dt*0.2 ) <<ldata[j].dist << ldata[j].angle;
-
-        if ( ldata[j].dist> ( dt+ ( dt*0.2 ) ) and ldata[j].angle < 0 ) {
+    for ( j = i; j<ldata.size()-5; j++ ) 
+    {
+        if ( ldata[j].dist > ( dt+ ( dt*0.2 ) ) and ldata[j].angle < 0 ) 
+	{
             cTarget.subTarget=inner->transform ( "world", QVec::vec3 ( ldata[j].dist *sin ( ldata[j].angle )-2000,0, ldata[j].dist *cos ( ldata[j].angle ) ), "laser" );
             cTarget.activeSub = true;
             break;
         }
     }
-    qDebug() <<  __FUNCTION__<< "Subtargeet" << QVec::vec3 ( ldata[j].dist *sin ( ldata[j].angle ),0, ldata[j].dist *cos ( ldata[j].angle ) );
-
 }
 
 void SpecificWorker::turn()
 {
-	float alpha;
-	QVec t;
+  float alpha;
+  QVec t;
 		 
- 	t = inner->transform("robot", cTarget.target, "world");
-	alpha =atan2(t.x(), t.z() );
-	if( alpha <= ldata.front().angle and alpha >= ldata. back().angle)
-	{
-		stopRobot();
-		state = State::WORKING;
-	}
-	else
-	{
-		if( alpha > ldata.front().angle )  // turn right
-			try{ differentialrobot_proxy->setSpeedBase(0, 0.4);}
-			catch(Ice::Exception &ex) {std::cout<<ex.what()<<std::endl;}
-		else															// turn left
-			try{ differentialrobot_proxy->setSpeedBase(0, -0.4);}
-			catch(Ice::Exception &ex) {std::cout<<ex.what()<<std::endl;};
-	}
+  t = inner->transform("robot", cTarget.target, "world");
+  alpha =atan2(t.x(), t.z() );
+	
+  if( alpha <= ldata.front().angle and alpha >= ldata. back().angle)
+  {
+    stopRobot();
+    state = State::WORKING;
+  }
+  else
+  {
+    if( alpha > ldata.front().angle )  // turn right
+    {
+      try{ differentialrobot_proxy->setSpeedBase(0, 0.4);}
+    
+      catch(Ice::Exception &ex) {std::cout<<ex.what()<<std::endl;}
+    }
+    else	// turn left
+    {
+      try{ differentialrobot_proxy->setSpeedBase(0, -0.4);}
+      catch(Ice::Exception &ex) {std::cout<<ex.what()<<std::endl;};
+    }
+  }
 }
 
 
 void SpecificWorker::stopRobot()
 {
-    try {
-        differentialrobot_proxy->setSpeedBase ( 0,0 );
-    } catch ( Ice::Exception &ex ) {
+    try
+    {
+       differentialrobot_proxy->setSpeedBase ( 0,0 );
+    } 
+    catch ( Ice::Exception &ex ) 
+    {
         std::cout<<ex.what() <<std::endl;
     };
 }
@@ -424,6 +449,7 @@ void SpecificWorker::drawTarget ( const QVec &target )
 {
     InnerModelDraw::addPlane_ignoreExisting ( innerViewer, "target", "world", QVec::vec3 ( target ( 0 ), 100, target ( 2 ) ), QVec::vec3 ( 1,0,0 ), "#009900", QVec::vec3 ( 100,100,100 ) );
 }
+
 void SpecificWorker::undrawTarget ( const QString& name )
 {
     InnerModelDraw::removeNode ( innerViewer, name );
@@ -432,7 +458,6 @@ void SpecificWorker::undrawTarget ( const QString& name )
 float SpecificWorker::go ( const TargetPose &target )
 {
     qDebug() <<"GO";
-//primeraVez=true;
     cTarget.target = QVec::vec3 ( target.x, target.y, target.z );
     cTarget.activeT = true;
     state = State::WORKING;
@@ -442,7 +467,6 @@ float SpecificWorker::go ( const TargetPose &target )
 
 NavState SpecificWorker::getState()
 {
-    
   return nState;
 }
 
@@ -450,7 +474,6 @@ float SpecificWorker::goBackwards ( const TargetPose &target )
 {
     return 0;
 }
-
 
 float SpecificWorker::goReferenced ( const TargetPose &target, const float xRef, const float zRef, const float threshold )
 {
@@ -466,7 +489,6 @@ void SpecificWorker::mapBasedTarget ( const NavigationParameterMap &parameters )
 {
 
 }
-
 
 void SpecificWorker::stop()
 {
