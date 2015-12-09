@@ -18,11 +18,11 @@
  */
 
 
-/** \mainpage RoboComp::MyFirstComp
+/** \mainpage RoboComp::mycomponent
  *
  * \section intro_sec Introduction
  *
- * The MyFirstComp component...
+ * The mycomponent component...
  *
  * \section interface_sec Interface
  *
@@ -34,7 +34,7 @@
  * ...
  *
  * \subsection install2_ssec Compile and install
- * cd MyFirstComp
+ * cd mycomponent
  * <br>
  * cmake . && make
  * <br>
@@ -52,7 +52,7 @@
  *
  * \subsection execution_ssec Execution
  *
- * Just: "${PATH_TO_BINARY}/MyFirstComp --Ice.Config=${PATH_TO_CONFIG_FILE}"
+ * Just: "${PATH_TO_BINARY}/mycomponent --Ice.Config=${PATH_TO_CONFIG_FILE}"
  *
  * \subsection running_ssec Once running
  *
@@ -83,7 +83,7 @@
 #include <DifferentialRobot.h>
 #include <Laser.h>
 #include <AprilTags.h>
-#include <Controller.h>
+#include <TrajectoryRobot2D.h>
 
 
 // User includes here
@@ -95,14 +95,14 @@ using namespace RoboCompCommonBehavior;
 using namespace RoboCompDifferentialRobot;
 using namespace RoboCompLaser;
 using namespace RoboCompAprilTags;
-using namespace RoboCompController;
+using namespace RoboCompTrajectoryRobot2D;
 
 
 
-class MyFirstComp : public RoboComp::Application
+class mycomponent : public RoboComp::Application
 {
 public:
-	MyFirstComp (QString prfx) { prefix = prfx.toStdString(); }
+	mycomponent (QString prfx) { prefix = prfx.toStdString(); }
 private:
 	void initialize();
 	std::string prefix;
@@ -112,14 +112,14 @@ public:
 	virtual int run(int, char*[]);
 };
 
-void ::MyFirstComp::initialize()
+void ::mycomponent::initialize()
 {
 	// Config file properties read example
 	// configGetString( PROPERTY_NAME_1, property1_holder, PROPERTY_1_DEFAULT_VALUE );
 	// configGetInt( PROPERTY_NAME_2, property1_holder, PROPERTY_2_DEFAULT_VALUE );
 }
 
-int ::MyFirstComp::run(int argc, char* argv[])
+int ::mycomponent::run(int argc, char* argv[])
 {
 #ifdef USE_QTGUI
 	QApplication a(argc, argv);  // GUI application
@@ -128,29 +128,12 @@ int ::MyFirstComp::run(int argc, char* argv[])
 #endif
 	int status=EXIT_SUCCESS;
 
-	ControllerPrx controller_proxy;
 	DifferentialRobotPrx differentialrobot_proxy;
 	LaserPrx laser_proxy;
+	TrajectoryRobot2DPrx trajectoryrobot2d_proxy;
 
 	string proxy, tmp;
 	initialize();
-
-
-	try
-	{
-		if (not GenericMonitor::configGetString(communicator(), prefix, "ControllerProxy", proxy, ""))
-		{
-			cout << "[" << PROGRAM_NAME << "]: Can't read configuration for proxy ControllerProxy\n";
-		}
-		controller_proxy = ControllerPrx::uncheckedCast( communicator()->stringToProxy( proxy ) );
-	}
-	catch(const Ice::Exception& ex)
-	{
-		cout << "[" << PROGRAM_NAME << "]: Exception: " << ex;
-		return EXIT_FAILURE;
-	}
-	rInfo("ControllerProxy initialized Ok!");
-	mprx["ControllerProxy"] = (::IceProxy::Ice::Object*)(&controller_proxy);//Remote server proxy creation example
 
 
 	try
@@ -186,7 +169,24 @@ int ::MyFirstComp::run(int argc, char* argv[])
 	rInfo("LaserProxy initialized Ok!");
 	mprx["LaserProxy"] = (::IceProxy::Ice::Object*)(&laser_proxy);//Remote server proxy creation example
 
-IceStorm::TopicManagerPrx topicManager = IceStorm::TopicManagerPrx::checkedCast(communicator()->propertyToProxy("TopicManager.Proxy"));
+
+	try
+	{
+		if (not GenericMonitor::configGetString(communicator(), prefix, "TrajectoryRobot2DProxy", proxy, ""))
+		{
+			cout << "[" << PROGRAM_NAME << "]: Can't read configuration for proxy TrajectoryRobot2DProxy\n";
+		}
+		trajectoryrobot2d_proxy = TrajectoryRobot2DPrx::uncheckedCast( communicator()->stringToProxy( proxy ) );
+	}
+	catch(const Ice::Exception& ex)
+	{
+		cout << "[" << PROGRAM_NAME << "]: Exception: " << ex;
+		return EXIT_FAILURE;
+	}
+	rInfo("TrajectoryRobot2DProxy initialized Ok!");
+	mprx["TrajectoryRobot2DProxy"] = (::IceProxy::Ice::Object*)(&trajectoryrobot2d_proxy);//Remote server proxy creation example
+
+	IceStorm::TopicManagerPrx topicManager = IceStorm::TopicManagerPrx::checkedCast(communicator()->propertyToProxy("TopicManager.Proxy"));
 
 
 	SpecificWorker *worker = new SpecificWorker(mprx);
@@ -215,6 +215,7 @@ IceStorm::TopicManagerPrx topicManager = IceStorm::TopicManagerPrx::checkedCast(
 		CommonBehaviorI *commonbehaviorI = new CommonBehaviorI(monitor );
 		adapterCommonBehavior->add(commonbehaviorI, communicator()->stringToIdentity("commonbehavior"));
 		adapterCommonBehavior->activate();
+
 
 
 
@@ -312,7 +313,7 @@ int main(int argc, char* argv[])
 			printf("Configuration prefix: <%s>\n", prefix.toStdString().c_str());
 		}
 	}
-	::MyFirstComp app(prefix);
+	::mycomponent app(prefix);
 
 	return app.main(argc, argv, configFile.c_str());
 }

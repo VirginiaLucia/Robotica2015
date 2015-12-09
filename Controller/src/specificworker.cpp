@@ -132,27 +132,6 @@ void SpecificWorker::compute()
 	    }
 	  break;
 	  
-        /*case State::WORKING:
-            if ( heLlegado() ) {
-                qDebug() << __FUNCTION__<< "Arrived to target" << cTarget.target;
-                stopRobot();
-                state = State::FINISH;
-            } else if ( hayCamino2() ) {
-                goToTarget();
-            }
-	    else if(cTarget.activeSub == true)
-	    {
-	      qFatal("fary");
-	      
-		goToSubTarget(); 
-	    }
-	    else
-	    {
-	      qFatal("fary");
-	      createSubTarget();
-	    }
-            break;*/
-
         case State::TURN:
 	  qDebug()<<"ESTADO::TURN";
 	    turn();
@@ -169,7 +148,6 @@ void SpecificWorker::compute()
         std::cout << "Error reading from Camera" << e << std::endl;
     }
 
-    //histogram();
     innerViewer->update();
     osgView->autoResize();
     osgView->frame();
@@ -180,47 +158,18 @@ void SpecificWorker::heLlegado()
     QVec t = inner->transform ( "robot", cTarget.target, "world" );
     float d = t.norm2();
     
-    qDebug() << __FUNCTION__<< "distancia d : " << d;
+   // qDebug() << __FUNCTION__<< "distancia d : " << d;
     if ( d < 100 ) 
     {
         qDebug() << __FUNCTION__<< "He llegado";
-	 state = State::FINISH;
+	stopRobot();
+	state = State::FINISH;
     } 
     else 
     {
        state = State::FREEWAY;       
     }
 }
-
-/*bool SpecificWorker::hayCamino()
-{
-
-    QVec t = inner->transform ( "robot", cTarget.target, "world" );
-    float d = t.norm2();
-    float alpha =atan2 ( t.x(), t.z() );
-
-    for ( uint i = 0; i<ldata.size(); i++ )
-    {
-        if ( ldata[i].angle <= alpha )
-	{
-            if ( ldata[i].dist < d )
-	    {
-	        qDebug() <<"NO hay camino";
-		state = State::GOSUBTARGET;
-            } 
-            else
-	    {
-                cTarget.activeSub=false;
-                qDebug() <<"hay camino";
-		state = State::GOTARGET;
-            }
-        }
-    }
-    
-    qDebug() <<"NO ve la marca";
-    state = State::TURN;
-}
-*/
 
 void SpecificWorker::hayCamino2()
 {
@@ -338,13 +287,12 @@ void SpecificWorker::goToSubTarget()
 	try
 	{
             differentialrobot_proxy->setSpeedBase ( 0, 0);
+	    
         } 
         catch ( const Ice::Exception &ex ) 
 	{
             std::cout << ex << std::endl;
         }
-        sleep ( 1 );
-
     } 
     else
     {
@@ -436,8 +384,11 @@ void SpecificWorker::turn()
 void SpecificWorker::stopRobot()
 {
     try
-    {
-       differentialrobot_proxy->setSpeedBase ( 0,0 );
+    {	qDebug()<<"STOP";
+	differentialrobot_proxy->setSpeedBase ( 0,0 );
+	cTarget.activeT = false;
+	cTarget.activeSub = false;
+	//state = State::IDLE;
     } 
     catch ( Ice::Exception &ex ) 
     {
@@ -462,12 +413,35 @@ float SpecificWorker::go ( const TargetPose &target )
     cTarget.activeT = true;
     state = State::WORKING;
     drawTarget ( cTarget.target );
+    qDebug()<<cTarget.target;
+    //qFatal("fary");
     return ( inner->transform ( "world","robot" ) - cTarget.target ).norm2();
 }
 
 NavState SpecificWorker::getState()
 {
-  return nState;
+ 
+		qDebug()<<"GETSTATE";
+	
+    			switch( state )
+			{
+				case State::INIT:
+					nState.state = "INIT";
+					break;
+				case State::WORKING:
+					nState.state = "WORKING";
+					break;
+				case State::IDLE:
+					nState.state = "IDLE";
+					break;
+				case State::FINISH:
+					nState.state = "FINISH";
+					break;
+				case State::TURN:
+					nState.state = "TURN";
+					break;
+			}
+  return  nState;
 }
 
 float SpecificWorker::goBackwards ( const TargetPose &target )
@@ -492,6 +466,5 @@ void SpecificWorker::mapBasedTarget ( const NavigationParameterMap &parameters )
 
 void SpecificWorker::stop()
 {
-    cTarget.activeT = true;
     stopRobot();
 }

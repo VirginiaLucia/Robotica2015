@@ -68,6 +68,11 @@ private:
   TLaserData ldata;
   InnerModel* inner;
   QVec nodo;
+  ListDigraph grafo;
+   TBaseState bState;
+   ListDigraph::Node ninit;
+  ListDigraph::NodeMap<QVec> *map;
+
 
 };
 

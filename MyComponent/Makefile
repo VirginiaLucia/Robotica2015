@@ -144,17 +144,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named MyFirstComp
+# Target rules for targets named mycomponent
 
 # Build rule for target.
-MyFirstComp: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 MyFirstComp
-.PHONY : MyFirstComp
+mycomponent: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 mycomponent
+.PHONY : mycomponent
 
 # fast build rule for target.
-MyFirstComp/fast:
-	$(MAKE) -f src/CMakeFiles/MyFirstComp.dir/build.make src/CMakeFiles/MyFirstComp.dir/build
-.PHONY : MyFirstComp/fast
+mycomponent/fast:
+	$(MAKE) -f src/CMakeFiles/mycomponent.dir/build.make src/CMakeFiles/mycomponent.dir/build
+.PHONY : mycomponent/fast
 
 # Help Target
 help:
@@ -168,7 +168,7 @@ help:
 	@echo "... install/strip"
 	@echo "... list_install_components"
 	@echo "... rebuild_cache"
-	@echo "... MyFirstComp"
+	@echo "... mycomponent"
 .PHONY : help
 
 

@@ -25,6 +25,19 @@ SpecificWorker::SpecificWorker(MapPrx& mprx) : GenericWorker(mprx)
 {
  inner = new InnerModel("/home/salabeta/Robotica2015/RoCKIn@home/world/apartment.xml");
  listaMarcas= new ListaMarcas(inner);
+ 
+  map= new ListDigraph::NodeMap<QVec>(grafo);
+  try
+  {
+    differentialrobot_proxy->getBaseState(bState);
+     ninit = grafo.addNode();
+      map->set(ninit,QVec::vec3(bState.x,0,bState.z));
+  }
+    catch(const Ice::Exception e)
+    {
+      std::cout << e << std::endl;
+    }
+
 }
 
 /**
@@ -43,69 +56,77 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 
 void SpecificWorker::compute()
 {   
-    TBaseState bState;
+   
 
     try
     {
       differentialrobot_proxy->getBaseState(bState);
       inner->updateTransformValues("robot", bState.x, 0, bState.z, 0, bState.alpha, 0);	//actualiza los valores del robot en el arbol de memoria
+      ldata = laser_proxy->getLaserData();  //read laser data 
+     
+      switch( estado )
+      {
+	case State::INIT:
+	  std::cout << "INIT" << std::endl;
+	  crearGrafo();
+	  break;
+	case State::CONTROLLER:
+	  std::cout << "CONTROLLER" << std::endl;
+	  controller();
+          break;
+      }
     }
+    
     catch(const Ice::Exception e)
     {
       std::cout << e << std::endl;
     }
   
-    ldata = laser_proxy->getLaserData();  //read laser data 
 
-    switch( estado )
-    {
-      case State::INIT:
-	std::cout << "INIT" << std::endl;
-	crearGrafo();
-	break;
-      case State::CONTROLLER:
-	std::cout << "CONTROLLER" << std::endl;
-	controller();
-	break;
-    }
+
 }
 
 void SpecificWorker::crearGrafo()
 {
-     ldata = laser_proxy->getLaserData();
-     int maxDist = 0;
-     int i, j;
-     
-      for(i = 5; i<ldata.size()-5; i++)
-      {
-	if(ldata[i].dist > maxDist)
-	{
-	  maxDist = ldata[i].dist;
-	  j=i;
-	}
-      }
-      nodo=inner->laserTo("world", "laser", maxDist, ldata[j].angle);
-      estado = State::CONTROLLER;
+    const int offset = 20;
+    int maxDist = 0;
+    int i, j;
+
+    RoboCompLaser::TLaserData copiaLaser = ldata;
+    std::sort( copiaLaser.begin()+offset, copiaLaser.end()-offset, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist > b.dist; }) ;  
+   
+    nodo = inner->laserTo("world", "laser", copiaLaser[offset].dist - 500, copiaLaser[offset].angle);
+    estado = State::CONTROLLER;
 }
 
 void SpecificWorker::controller()
 {
   try
   {
-    NavState state=controller_proxy->getState();
-    //qDe
+    RoboCompTrajectoryRobot2D::NavState state=trajectoryrobot2d_proxy->getState();
+ 
+    qDebug() << QString::fromStdString(state.state);
     if(state.state == "IDLE")
     {
-
-      //TargetPose t={nodo.x(), nodo.y(), nodo.z()};
-      TargetPose t={2500, 0, -5000};
+      TargetPose t;
+        t.x=nodo.x();
+	t.y=nodo.y();
+	t.z=nodo.z();
+      //TargetPose t={2500, 0, -5000};
       qDebug()<<"nodo: "<<nodo;
-      controller_proxy->go(t);
+      
+      trajectoryrobot2d_proxy->go(t);
     }
     else if(state.state == "FINISH")
     {
-      crearGrafo();
+      //crearGrafo();
       //estado = State::WAIT;
+      ListDigraph::Node n = grafo.addNode();
+      map->set(n,nodo);
+      grafo.addArc(ninit, n);
+      grafo.addArc(n, ninit);
+      ninit= n;
+      crearGrafo();
       return;
     }
   }
