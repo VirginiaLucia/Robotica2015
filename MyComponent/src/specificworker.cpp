@@ -95,7 +95,7 @@ void SpecificWorker::crearGrafo()
     RoboCompLaser::TLaserData copiaLaser = ldata;
     std::sort( copiaLaser.begin()+offset, copiaLaser.end()-offset, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist > b.dist; }) ;  
    
-    nodo = inner->laserTo("world", "laser", copiaLaser[offset].dist - 500, copiaLaser[offset].angle);
+    nodo = inner->laserTo("world", "laser", copiaLaser[offset].dist - 1000, copiaLaser[offset].angle);
     estado = State::CONTROLLER;
 }
 
@@ -116,6 +116,7 @@ void SpecificWorker::controller()
       qDebug()<<"nodo: "<<nodo;
       
       trajectoryrobot2d_proxy->go(t);
+      state=trajectoryrobot2d_proxy->getState();
     }
     else if(state.state == "FINISH")
     {

@@ -139,6 +139,7 @@ void SpecificWorker::compute()
 
         case State::FINISH:
 	  qDebug()<<"ESTADO::FINISH";
+	  
             sleep ( 2 );
             undrawTarget ( "target" );
             state = State::IDLE;
@@ -156,13 +157,23 @@ void SpecificWorker::compute()
 void SpecificWorker::heLlegado()
 {
     QVec t = inner->transform ( "robot", cTarget.target, "world" );
-    float d = t.norm2();
+    float d = t.norm2()-t.y();
     
-   // qDebug() << __FUNCTION__<< "distancia d : " << d;
+   qDebug() << __FUNCTION__<< "distancia d : " << d;
+      qDebug() << __FUNCTION__<< cTarget.target;
     if ( d < 100 ) 
     {
         qDebug() << __FUNCTION__<< "He llegado";
 	stopRobot();
+	if(ldata.front().dist < 4550){
+	   if(ldata.front().angle < 0)
+	      differentialrobot_proxy->setSpeedBase(0, 0.4);
+	   else
+	   {
+	   if(ldata.front().angle > 0)
+		differentialrobot_proxy->setSpeedBase(0, -0.4);    }
+	  }
+     
 	state = State::FINISH;
     } 
     else 
@@ -355,7 +366,7 @@ void SpecificWorker::turn()
 {
   float alpha;
   QVec t;
-		 
+  qDebug()<<"GIRANDO";
   t = inner->transform("robot", cTarget.target, "world");
   alpha =atan2(t.x(), t.z() );
 	
