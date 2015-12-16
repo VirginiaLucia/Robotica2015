@@ -89,8 +89,6 @@ void SpecificWorker::compute()
 void SpecificWorker::crearGrafo()
 {
     const int offset = 20;
-    int maxDist = 0;
-    int i, j;
 
     RoboCompLaser::TLaserData copiaLaser = ldata;
     std::sort( copiaLaser.begin()+offset, copiaLaser.end()-offset, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist > b.dist; }) ;  
@@ -112,16 +110,14 @@ void SpecificWorker::controller()
         t.x=nodo.x();
 	t.y=nodo.y();
 	t.z=nodo.z();
-      //TargetPose t={2500, 0, -5000};
-      qDebug()<<"nodo: "<<nodo;
+
       
       trajectoryrobot2d_proxy->go(t);
       state=trajectoryrobot2d_proxy->getState();
     }
     else if(state.state == "FINISH")
     {
-      //crearGrafo();
-      //estado = State::WAIT;
+
       ListDigraph::Node n = grafo.addNode();
       map->set(n,nodo);
       grafo.addArc(ninit, n);
@@ -140,175 +136,6 @@ void SpecificWorker::controller()
 
 
 
-void SpecificWorker::searchMark(int initMark)
-{
-    static bool firstTime=true;
-    
-    if(listaMarcas->exists(initMark))
-    {
-      try
-      {
-	differentialrobot_proxy->setSpeedBase(0,0);
-      }
-      catch(const Ice::Exception e)
-      {
-	std::cout << e << std::endl;
-      }
-      estado = State::CONTROLLER;
-      firstTime=true;
-      return;
-    }
-    
-    if(firstTime)
-    {
-      try
-      {
-	differentialrobot_proxy->setSpeedBase(0,0.5);
-      }
-      catch(const Ice::Exception e)
-      {
-	std::cout << e << std::endl;
-      }
-      firstTime=false;
-    }
-
-}
-
-void SpecificWorker::wait()
-{  inner = new InnerModel("/home/salabeta/robocomp/files/innermodel/simpleworld.xml");
-
-    static bool primeraVez=true;
-    static QTime reloj;
-    int initMark=listaMarcas->getInitMark();
-    
-    if(primeraVez)
-    {
-      reloj = QTime::currentTime();
-      primeraVez=false;
-      int newState = (initMark + 1) % 4;
-      listaMarcas->setInitMark(newState);
-      listaMarcas->setInMemory(false);
-    }
-    
-    if(reloj.elapsed() > 3000)
-    {
-      estado = State::SEARCH;
-      primeraVez=true;
-      return;
-    } 
-}
-
-void SpecificWorker::navegate()
-{
-    const int offset = 20;
-    int initMark=listaMarcas->getInitMark();
-    float distance= listaMarcas->distance(initMark);
-    
-    if(listaMarcas->exists(initMark))
-    {
-      std::cout << "Existe la marca::" << initMark << std::endl;
-      if(distance<400)
-      {	
-	differentialrobot_proxy->setSpeedBase(0,0);
-
-	estado = State::WAIT;
-	return;
-      }  inner = new InnerModel("/home/salabeta/robocomp/files/innermodel/simpleworld.xml");
-
-    }
-    else
-    {
-      estado = State::SEARCH;
-      return;
-    }
-    
-
-    try
-    {		
-        std::sort( ldata.begin()+offset, ldata.end()-offset, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;  //sort laser data from small to large distances using a lambda function.
-	
-	float dist=(ldata.data()+offset)->dist;
-	
-	//Si encuentra un obstaculo
-	if(dist <= 450)
-	{
-	    estado = State::WALL;
-	    return;
-	}  
-	else
-	{
-	  float tx= listaMarcas->get(initMark).tx;
-	  float tz= listaMarcas->get(initMark).tz;
-	  float r= atan2(tx, tz);
-	  differentialrobot_proxy->setSpeedBase(150, 0.4*r);
-	}
-	
-    }
-    catch(const Ice::Exception &ex)
-    {
-        std::cout << ex << std::endl;
-    }
-}
-
-
-void SpecificWorker::wall()
-{
-    RoboCompLaser::TLaserData ldataCopy = ldata;
-    const int offset = 30;
-    float rot=-0.3;
-    
-    std::sort( ldataCopy.begin()+offset, ldataCopy.end()-offset, [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;  //sort laser data from small to large distances using a lambda function.
-    
-    //Si no hay obstaculo
-    if((ldataCopy.data() + offset )->dist > 450)
-    {
-      estado = State::NAVEGATE;
-      return;
-    }
-    
-    //gira a izq o der para no traspasar el obstaculo o la pared
-    if((ldataCopy.data() + offset )->angle < 0)
-      rot=0.3;
-    else
-    {
-      if((ldataCopy.data() + offset )->angle > 0)
-	rot=-0.3;
-    }
-    
-     differentialrobot_proxy->setSpeedBase(40, rot);
-     usleep(1000000);
-}
-
-/*void SpecificWorker::controller()
-{
-  try
-  {
-    NavState state=controller_proxy->getState();
-    //qDe
-    if(state.state == "IDLE")
-    {
-      ListaMarcas::Marca m=listaMarcas->get(listaMarcas->getInitMark());
-      QVec w = inner -> transform("world",QVec::vec3(m.tx,m.ty,m.tz),"rgbd");
-      TargetPose t={w.x(), w.y(), w.z()};
-      controller_proxy->go(t);
-    }
-    else if(state.state == "FINISH")
-    {
-      
-      estado = State::WAIT;
-      return;
-    }
-  }
-  catch(const Ice::Exception &ex)
-    {
-        std::cout << ex << std::endl;
-    }
-}*/
-
-
-////////////////////////////
-/// ICEPeriod
-////////////////////////////
 
 void SpecificWorker::newAprilTag(const tagsList& tags)
 {
@@ -319,3 +146,4 @@ void SpecificWorker::newAprilTag(const tagsList& tags)
    }
 }
  
+

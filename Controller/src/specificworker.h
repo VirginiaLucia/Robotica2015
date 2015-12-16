@@ -71,7 +71,7 @@ private:
 	  bool activeT, activeSub=false;
 	} currentTarget;
 	
-	//NavState state;
+
 	RoboCompTrajectoryRobot2D::NavState nState;
 	InnerModel* inner;
 	TLaserData ldata, ldataR;
@@ -86,7 +86,7 @@ private:
 	void goToTarget();
 	void heLlegado();
 	void stopRobot();
-	void drawTarget(const QVec& target);
+	void drawTarget(const QVec& target, const QString &nombre);
 	void undrawTarget(const QString &name);
 	void turn();
 	bool caja(const QVec& t);

@@ -53,17 +53,13 @@ public:
 
 public slots:
 	void compute();
-	void navegate();
-	void searchMark(int initMark);
-	void wait();
-	void wall();
 	void controller();
 	void crearGrafo();
 
 private:
   ListaMarcas* listaMarcas;
 
-  enum class State  { INIT, SEARCH, NAVEGATE, WAIT, WALL, FINISH, CONTROLLER};
+  enum class State  { INIT, CONTROLLER};
   State estado = State::INIT;
   TLaserData ldata;
   InnerModel* inner;
